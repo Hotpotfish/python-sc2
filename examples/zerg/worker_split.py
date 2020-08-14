@@ -47,7 +47,7 @@ def main():
     sc2.run_game(
         sc2.maps.get("AcropolisLE"),
         [Bot(Race.Zerg, WorkerSplitBot()), Computer(Race.Terran, Difficulty.Medium)],
-        realtime=True,
+        realtime=False,
     )
 
 

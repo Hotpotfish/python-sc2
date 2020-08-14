@@ -7,7 +7,7 @@ import random, numpy as np
 import sc2
 from sc2 import Race, Difficulty
 from sc2.constants import *
-from sc2.player import Bot, Computer
+from sc2.player import Bot, Computer, Human
 from sc2.position import Point2, Point3
 from sc2.unit import Unit
 from sc2.units import Units
@@ -249,7 +249,9 @@ class RampWallBot(sc2.BotAI):
 
 
 def main():
-    map = random.choice(
+
+    # map = "ParaSiteLE"
+    ''' map = random.choice(
         [
             # Most maps have 2 upper points at the ramp (len(self.main_base_ramp.upper) == 2)
             "AutomatonLE",
@@ -264,15 +266,17 @@ def main():
             "AcolyteLE",  # Has 4 upper points at the ramp to the in-base natural and 2 upper points at the small ramp
             "HonorgroundsLE",  # Has 4 or 9 upper points at the large main base ramp
         ]
-    )
-    # map = "ParaSiteLE"
-    sc2.run_game(
+    )sc2.run_game(
         sc2.maps.get(map),
         [Bot(Race.Terran, RampWallBot()), Computer(Race.Zerg, Difficulty.Hard)],
         realtime=True,
         # sc2_version="4.10.1",
+    )'''
+    sc2.run_game(
+        sc2.maps.get("AutomatonLE"),
+        [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, RampWallBot())],
+        realtime=True
     )
-
 
 if __name__ == "__main__":
     main()

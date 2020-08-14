@@ -12,7 +12,7 @@ from sc2.unit import Unit
 from sc2.units import Units
 from sc2.position import Point2
 from sc2.ids.buff_id import BuffId
-from sc2.player import Bot, Computer
+from sc2.player import Bot, Computer, Human
 
 
 class ThreebaseVoidrayBot(sc2.BotAI):
@@ -127,10 +127,15 @@ class ThreebaseVoidrayBot(sc2.BotAI):
 
 
 def main():
+    #sc2.run_game(
+        #sc2.maps.get("Simple128"),
+        #[Bot(Race.Protoss, ThreebaseVoidrayBot()), Computer(Race.Protoss, Difficulty.Easy)],
+        #realtime=True,
+    #)
     sc2.run_game(
-        sc2.maps.get("(2)CatalystLE"),
-        [Bot(Race.Protoss, ThreebaseVoidrayBot()), Computer(Race.Protoss, Difficulty.Easy)],
-        realtime=False,
+        sc2.maps.get("AutomatonLE"),
+        [Human(Race.Terran, fullscreen=True), Bot(Race.Protoss, ThreebaseVoidrayBot())],
+        realtime=True
     )
 
 

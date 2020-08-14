@@ -9,7 +9,7 @@ from sc2.position import Point2, Point3
 import sc2
 from sc2 import Race, Difficulty
 from sc2.ids.unit_typeid import UnitTypeId
-from sc2.player import Bot, Computer
+from sc2.player import Bot, Computer, Human
 from sc2.unit import Unit
 from sc2.units import Units
 
@@ -71,13 +71,17 @@ class ExpandEverywhere(sc2.BotAI):
 
 
 def main():
-    sc2.run_game(
+    '''sc2.run_game(
         sc2.maps.get("AcropolisLE"),
         [Bot(Race.Zerg, ExpandEverywhere()), Computer(Race.Terran, Difficulty.Medium)],
         realtime=False,
         save_replay_as="ZvT.SC2Replay",
+    )'''
+    sc2.run_game(
+        sc2.maps.get("AutomatonLE"),
+        [Human(Race.Terran, fullscreen=True), Bot(Race.Zerg, ExpandEverywhere())],
+        realtime=True
     )
-
 
 if __name__ == "__main__":
     main()

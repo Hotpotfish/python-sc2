@@ -11,7 +11,7 @@ from sc2.ids.ability_id import AbilityId
 from sc2.unit import Unit
 from sc2.units import Units
 from sc2.position import Point2
-from sc2.player import Bot, Computer
+from sc2.player import Bot, Computer, Human
 from sc2.data import race_townhalls
 
 
@@ -114,11 +114,16 @@ class Hydralisk(sc2.BotAI):
 
 
 def main():
+    # sc2.run_game(
+    #     sc2.maps.get("AutomatonLE"),
+    #     [Bot(Race.Zerg, Hydralisk()), Computer(Race.Terran, Difficulty.Medium)],
+    #     realtime=False,
+    #     save_replay_as="ZvT.SC2Replay",
+    # )
     sc2.run_game(
-        sc2.maps.get("(2)CatalystLE"),
-        [Bot(Race.Zerg, Hydralisk()), Computer(Race.Terran, Difficulty.Medium)],
-        realtime=False,
-        save_replay_as="ZvT.SC2Replay",
+        sc2.maps.get("AutomatonLE"),
+        [Human(Race.Terran, fullscreen=True),Bot(Race.Zerg, Hydralisk())],
+        realtime=True
     )
 
 

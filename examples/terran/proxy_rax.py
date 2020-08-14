@@ -5,7 +5,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
 import sc2
 from sc2 import Race, Difficulty
 from sc2.constants import *
-from sc2.player import Bot, Computer
+from sc2.player import Bot, Computer, Human
 from sc2.unit import Unit
 from sc2.units import Units
 from sc2.position import Point2
@@ -61,12 +61,16 @@ class ProxyRaxBot(sc2.BotAI):
 
 
 def main():
-    sc2.run_game(
+    '''sc2.run_game(
         sc2.maps.get("(2)CatalystLE"),
         [Bot(Race.Terran, ProxyRaxBot()), Computer(Race.Zerg, Difficulty.Hard)],
         realtime=False,
+    )'''
+    sc2.run_game(
+        sc2.maps.get("AutomatonLE"),
+        [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, ProxyRaxBot())],
+        realtime=True
     )
-
 
 if __name__ == "__main__":
     main()
