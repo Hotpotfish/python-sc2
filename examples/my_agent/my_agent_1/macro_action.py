@@ -1,5 +1,6 @@
 import random
 from sc2.ids.unit_typeid import UnitTypeId
+from sc2.position import Point2
 from sc2.units import Units
 from sc2.unit import Unit
 
@@ -67,5 +68,28 @@ async def trainMarine(self):
         else:
             break
 
-async def marineAttack(self):
 
+def select_target(self) -> Point2:
+    # Pick a random enemy structure's position
+    targets = self.enemy_structures
+    if targets:
+        return targets.random.position
+
+    # Pick a random enemy unit's position
+    targets = self.enemy_units
+    if targets:
+        return targets.random.position
+
+    # Pick enemy start location if it has no friendly units nearby
+    if min([unit.distance_to(self.enemy_start_locations[0]) for unit in self.units]) > 5:
+        return self.enemy_start_locations[0]
+
+    # Pick a random mineral field on the map
+    return self.mineral_field.random.position
+
+
+async def marineAttack(self):
+    target: Point2 = self.select_target()
+    forces: Units = self.units(UnitTypeId.MARINE)
+    for unit in forces:
+        unit.attack(target)
