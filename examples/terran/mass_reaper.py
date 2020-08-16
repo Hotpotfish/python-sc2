@@ -40,11 +40,11 @@ class MassReaperBot(sc2.BotAI):
         - self.already_pending(TYPE) counts how many units are queued
         """
         if (
-            self.supply_left < 5
-            and self.townhalls
-            and self.supply_used >= 14
-            and self.can_afford(UnitTypeId.SUPPLYDEPOT)
-            and self.already_pending(UnitTypeId.SUPPLYDEPOT) < 1
+                self.supply_left < 5
+                and self.townhalls
+                and self.supply_used >= 14
+                and self.can_afford(UnitTypeId.SUPPLYDEPOT)
+                and self.already_pending(UnitTypeId.SUPPLYDEPOT) < 1
         ):
             workers: Units = self.workers.gathering
             # If workers were found
@@ -72,9 +72,9 @@ class MassReaperBot(sc2.BotAI):
 
         # Expand if we can afford (400 minerals) and have less than 2 bases
         if (
-            1 <= self.townhalls.amount < 2
-            and self.already_pending(UnitTypeId.COMMANDCENTER) == 0
-            and self.can_afford(UnitTypeId.COMMANDCENTER)
+                1 <= self.townhalls.amount < 2
+                and self.already_pending(UnitTypeId.COMMANDCENTER) == 0
+                and self.can_afford(UnitTypeId.COMMANDCENTER)
         ):
             # get_next_expansion returns the position of the next possible expansion location where you can place a command center
             location: Point2 = await self.get_next_expansion()
@@ -89,16 +89,16 @@ class MassReaperBot(sc2.BotAI):
         # Check if we have a supply depot (tech requirement) before trying to make barracks
         barracks_tech_requirement: float = self.tech_requirement_progress(UnitTypeId.BARRACKS)
         if (
-            barracks_tech_requirement == 1
-            # self.structures.of_type(
-            #     [UnitTypeId.SUPPLYDEPOT, UnitTypeId.SUPPLYDEPOTLOWERED, UnitTypeId.SUPPLYDEPOTDROP]
-            # ).ready
-            and self.structures(UnitTypeId.BARRACKS).ready.amount + self.already_pending(UnitTypeId.BARRACKS) < 4
-            and self.can_afford(UnitTypeId.BARRACKS)
+                barracks_tech_requirement == 1
+                # self.structures.of_type(
+                #     [UnitTypeId.SUPPLYDEPOT, UnitTypeId.SUPPLYDEPOTLOWERED, UnitTypeId.SUPPLYDEPOTDROP]
+                # ).ready
+                and self.structures(UnitTypeId.BARRACKS).ready.amount + self.already_pending(UnitTypeId.BARRACKS) < 4
+                and self.can_afford(UnitTypeId.BARRACKS)
         ):
             workers: Units = self.workers.gathering
             if (
-                workers and self.townhalls
+                    workers and self.townhalls
             ):  # need to check if townhalls.amount > 0 because placement is based on townhall location
                 worker: Unit = workers.furthest_to(workers.center)
                 # I chose placement_step 4 here so there will be gaps between barracks hopefully
@@ -110,8 +110,8 @@ class MassReaperBot(sc2.BotAI):
 
         # Build refineries (on nearby vespene) when at least one barracks is in construction
         if (
-            self.structures(UnitTypeId.BARRACKS).ready.amount + self.already_pending(UnitTypeId.BARRACKS) > 0
-            and self.already_pending(UnitTypeId.REFINERY) < 1
+                self.structures(UnitTypeId.BARRACKS).ready.amount + self.already_pending(UnitTypeId.BARRACKS) > 0
+                and self.already_pending(UnitTypeId.REFINERY) < 1
         ):
             # Loop over all townhalls that are 100% complete
             for th in self.townhalls.ready:
@@ -119,7 +119,7 @@ class MassReaperBot(sc2.BotAI):
                 vgs: Units = self.vespene_geyser.closer_than(10, th)
                 for vg in vgs:
                     if (await self.can_place(UnitTypeId.REFINERY, [vg.position]))[0] and self.can_afford(
-                        UnitTypeId.REFINERY
+                            UnitTypeId.REFINERY
                     ):
                         workers: Units = self.workers.gathering
                         if workers:  # same condition as above
@@ -133,14 +133,14 @@ class MassReaperBot(sc2.BotAI):
         # Make scvs until 22, usually you only need 1:1 mineral:gas ratio for reapers, but if you don't lose any then you will need additional depots (mule income should take care of that)
         # Stop scv production when barracks is complete but we still have a command center (priotize morphing to orbital command)
         if (
-            self.can_afford(UnitTypeId.SCV)
-            and self.supply_left > 0
-            and self.supply_workers < 22
-            and (
+                self.can_afford(UnitTypeId.SCV)
+                and self.supply_left > 0
+                and self.supply_workers < 22
+                and (
                 self.structures(UnitTypeId.BARRACKS).ready.amount < 1
                 and self.townhalls(UnitTypeId.COMMANDCENTER).idle
                 or self.townhalls(UnitTypeId.ORBITALCOMMAND).idle
-            )
+        )
         ):
             for th in self.townhalls.idle:
                 th.train(UnitTypeId.SCV)
@@ -192,9 +192,9 @@ class MassReaperBot(sc2.BotAI):
             reaperGrenadeRange: float = self._game_data.abilities[AbilityId.KD8CHARGE_KD8CHARGE.value]._proto.cast_range
             enemyGroundUnitsInGrenadeRange: Units = enemies_can_attack.filter(
                 lambda unit: not unit.is_structure
-                and not unit.is_flying
-                and unit.type_id not in {UnitTypeId.LARVA, UnitTypeId.EGG}
-                and unit.distance_to(r) < reaperGrenadeRange
+                             and not unit.is_flying
+                             and unit.type_id not in {UnitTypeId.LARVA, UnitTypeId.EGG}
+                             and unit.distance_to(r) < reaperGrenadeRange
             )
             if enemyGroundUnitsInGrenadeRange and (r.is_attacking or r.is_moving):
                 # If AbilityId.KD8CHARGE_KD8CHARGE in abilities, we check that to see if the reaper grenade is off cooldown
@@ -296,9 +296,9 @@ class MassReaperBot(sc2.BotAI):
             elif deficit < 0:
                 surplusWorkers = self.workers.closer_than(10, g).filter(
                     lambda w: w not in workerPoolTags
-                    and len(w.orders) == 1
-                    and w.orders[0].ability.id in [AbilityId.HARVEST_GATHER]
-                    and w.orders[0].target in gas_buildingTags
+                              and len(w.orders) == 1
+                              and w.orders[0].ability.id in [AbilityId.HARVEST_GATHER]
+                              and w.orders[0].target in gas_buildingTags
                 )
                 for i in range(-deficit):
                     if surplusWorkers.amount > 0:
@@ -318,9 +318,9 @@ class MassReaperBot(sc2.BotAI):
                 elif deficit < 0:
                     surplusWorkers = self.workers.closer_than(10, th).filter(
                         lambda w: w.tag not in workerPoolTags
-                        and len(w.orders) == 1
-                        and w.orders[0].ability.id in [AbilityId.HARVEST_GATHER]
-                        and w.orders[0].target in mineralTags
+                                  and len(w.orders) == 1
+                                  and w.orders[0].ability.id in [AbilityId.HARVEST_GATHER]
+                                  and w.orders[0].target in mineralTags
                     )
                     # workerPool.extend(surplusWorkers)
                     for i in range(-deficit):
@@ -331,11 +331,11 @@ class MassReaperBot(sc2.BotAI):
                     surplusTownhalls[th.tag] = {"unit": th, "deficit": deficit}
 
             if all(
-                [
-                    len(deficit_gas_buildings) == 0,
-                    len(surplusgas_buildings) == 0,
-                    len(surplusTownhalls) == 0 or deficitTownhalls == 0,
-                ]
+                    [
+                        len(deficit_gas_buildings) == 0,
+                        len(surplusgas_buildings) == 0,
+                        len(surplusTownhalls) == 0 or deficitTownhalls == 0,
+                    ]
             ):
                 # Cancel early if there is nothing to balance
                 return
@@ -356,9 +356,9 @@ class MassReaperBot(sc2.BotAI):
                     break
                 workersNearGas = self.workers.closer_than(10, gInfo["unit"]).filter(
                     lambda w: w.tag not in workerPoolTags
-                    and len(w.orders) == 1
-                    and w.orders[0].ability.id in [AbilityId.HARVEST_GATHER]
-                    and w.orders[0].target in mineralTags
+                              and len(w.orders) == 1
+                              and w.orders[0].ability.id in [AbilityId.HARVEST_GATHER]
+                              and w.orders[0].target in mineralTags
                 )
                 while workersNearGas.amount > 0 and workerPool.amount < deficitGasCount:
                     w = workersNearGas.pop()
@@ -397,9 +397,9 @@ class MassReaperBot(sc2.BotAI):
 def main():
     # Multiple difficulties for enemy bots available https://github.com/Blizzard/s2client-api/blob/ce2b3c5ac5d0c85ede96cef38ee7ee55714eeb2f/include/sc2api/sc2_gametypes.h#L30
     sc2.run_game(
-        sc2.maps.get("AutomatonLE"),
-        [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, MassReaperBot())],
-        realtime=True
+        sc2.maps.get("Simple128"),
+        [ Bot(Race.Terran, MassReaperBot()),Computer(Race.Zerg, Difficulty.Easy)],
+        realtime=False
     )
 
 
