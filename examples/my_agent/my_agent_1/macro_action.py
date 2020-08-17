@@ -5,68 +5,133 @@ from sc2.units import Units
 from sc2.unit import Unit
 
 
-# 动作不进行合法性检测
+# 动作若无法执行直接输出no-op
 
 # 修建补给站
 async def buildSupplydepot(self):
-    CCs: Units = self.townhalls(UnitTypeId.COMMANDCENTER)
-    cc: Unit = CCs.first
-    await self.build(UnitTypeId.SUPPLYDEPOT, near=cc.position.towards(self.game_info.map_center, 8))
+    # 是否能承担
+    if self.can_afford(UnitTypeId.SUPPLYDEPOT):
+        CCs: Units = self.townhalls()
+        # 指挥中心是否还在
+        if CCs:
+            worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
+            # 是否有空闲工人
+            if worker_candidates:
+                for cc in CCs:
+                    map_center = self.game_info.map_center
+                    position_towards_map_center = cc.position.towards(map_center, distance=8)
+                    placement_position = await self.find_placement(UnitTypeId.SUPPLYDEPOT, near=position_towards_map_center)
+                    # Placement_position can be None
+                    # 是否有合适的位置
+                    if placement_position:
+                        build_worker = worker_candidates.closest_to(placement_position)
+                        build_worker.build(UnitTypeId.SUPPLYDEPOT, placement_position)
+                        return
+
+    # CCs: Units = self.townhalls()
+    # for cc in CCs:
+    #     # cc: Unit = CCs.first
+    #     await self.build(UnitTypeId.SUPPLYDEPOT, near=cc.position.towards(self.game_info.map_center, 8))
 
 
 # 修建兵营
 async def buildBarracks(self):
-    CCs: Units = self.townhalls(UnitTypeId.COMMANDCENTER)
-    cc: Unit = CCs.first
-    await self.build(UnitTypeId.BARRACKS, near=cc.position.towards(self.game_info.map_center, 8))
+    # 是否能承担
+    if self.can_afford(UnitTypeId.BARRACKS):
+        # 科技树依赖
+        if self.structures(UnitTypeId.SUPPLYDEPOT) or self.structures(UnitTypeId.SUPPLYDEPOTLOWERED):
+            CCs: Units = self.townhalls()
+            # 指挥中心是否还在
+            if CCs:
+                worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
+                # 是否有空闲工人
+                if worker_candidates:
+                    for cc in CCs:
+                        map_center = self.game_info.map_center
+                        position_towards_map_center = cc.position.towards(map_center, distance=8)
+                        placement_position = await self.find_placement(UnitTypeId.BARRACKS, near=position_towards_map_center)
+                        # Placement_position can be None
+                        # 是否有合适的位置
+                        if placement_position:
+                            build_worker = worker_candidates.closest_to(placement_position)
+                            build_worker.build(UnitTypeId.BARRACKS, placement_position)
+                            return
 
 
 # 修建瓦斯矿场
-async def buildRefinery(self):
-    CCs: Units = self.townhalls(UnitTypeId.COMMANDCENTER)
-    cc: Unit = CCs.first
-    vgs = self.vespene_geyser.closer_than(10, cc)
-    for vg in vgs:
-        # if self.gas_buildings.filter(lambda unit: unit.distance_to(vg) < 1):
-        #     continue
-        # Select a worker closest to the vespene geysir
-        worker: Unit = self.select_build_worker(vg)
-        # Worker can be none in cases where all workers are dead
-        # or 'select_build_worker' function only selects from workers which carry no minerals
-        if worker is None:
-            continue
-        # Issue the build command to the worker, important: vg has to be a Unit, not a position
-        worker.build_gas(vg)
-        # # Only issue one build geysir command per frame
-        # break
+def buildRefinery(self):
+    # 是否能承担
+    if self.can_afford(UnitTypeId.REFINERY):
+        CCs: Units = self.townhalls()
+        # 指挥中心是否还在
+        if CCs:
+            worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
+            # 是否有空闲工人
+            if worker_candidates:
+                for cc in CCs:
+                    vgs = self.vespene_geyser.closer_than(10, cc)
+                    for vg in vgs:
+                        if self.gas_buildings.filter(lambda unit: unit.distance_to(vg) < 1):
+                            continue
+                        # 是否有合适的位置
+                        build_worker = worker_candidates.closest_to(vg)
+                        build_worker.build_gas(vg)
+                        return
 
 
 # 修建重工厂
 async def buildFactory(self):
-    CCs: Units = self.townhalls(UnitTypeId.COMMANDCENTER)
-    cc: Unit = CCs.first
-    vgs = self.vespene_geyser.closer_than(10, cc)
-    for vg in vgs:
-        # Select a worker closest to the vespene geysir
-        worker: Unit = self.select_build_worker(vg)
-        # Worker can be none in cases where all workers are dead
-        # or 'select_build_worker' function only selects from workers which carry no minerals
-        if worker is None:
-            continue
-        # Issue the build command to the worker, important: vg has to be a Unit, not a position
-        worker.build_gas(vg)
-        # # Only issue one build geysir command per frame
-        # break
+    # 是否能承担
+    if self.can_afford(UnitTypeId.FACTORY):
+        # 科技树依赖
+        if self.structures(UnitTypeId.SUPPLYDEPOT) or self.structures(UnitTypeId.BARRACKS):
+            CCs: Units = self.townhalls()
+            # 指挥中心是否还在
+            if CCs:
+                worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
+                # 是否有空闲工人
+                if worker_candidates:
+                    for cc in CCs:
+                        map_center = self.game_info.map_center
+                        position_towards_map_center = cc.position.towards(map_center, distance=8)
+                        placement_position = await self.find_placement(UnitTypeId.FACTORY, near=position_towards_map_center)
+                        # Placement_position can be None
+                        # 是否有合适的位置
+                        if placement_position:
+                            build_worker = worker_candidates.closest_to(placement_position)
+                            build_worker.build(UnitTypeId.FACTORY, placement_position)
+                            return
+async def expand(self):
+    if self.can_afford(UnitTypeId.COMMANDCENTER):
+        await self.expand_now()
+
+def trainScv(self):
+    if self.can_afford(UnitTypeId.SCV):
+        if self.supply_left > 0:
+            CCs: Units = self.townhalls()
+            if CCs:
+                for cc in CCs:
+                    if cc.is_idle:
+                        cc.train(UnitTypeId.SCV)
+                        return
 
 
 # 训练枪兵（至少一个）
-async def trainMarine(self):
-    for barracks in self.structures(UnitTypeId.BARRACKS).ready.idle:
-        # Reactor allows us to build two at a time
-        if self.can_afford(UnitTypeId.MARINE):
-            barracks.train(UnitTypeId.MARINE)
-        else:
-            break
+def trainMarine(self):
+    if self.structures(UnitTypeId.BARRACKS):
+        for barracks in self.structures(UnitTypeId.BARRACKS).ready.idle:
+            if self.can_afford(UnitTypeId.MARINE):
+                if self.supply_left > 0:
+                    barracks.train(UnitTypeId.MARINE)
+
+
+# 训练暴风（至少一个）
+async def trainCyclone(self):
+    if self.structures(UnitTypeId.FACTORY):
+        for factory in self.structures(UnitTypeId.FACTORY).ready.idle:
+            if self.can_afford(UnitTypeId.CYCLONE):
+                if self.supply_left > 2:
+                    factory.train(UnitTypeId.CYCLONE)
 
 
 def select_target(self) -> Point2:
@@ -88,8 +153,33 @@ def select_target(self) -> Point2:
     return self.mineral_field.random.position
 
 
+# 回去采矿
+async def scvBackToMineral(self):
+    for scv in self.workers.idle:
+        cc: Units = self.townhalls().closest_to(scv)
+        scv.gather(self.mineral_field.closest_to(cc))
+
+
+# 回去采瓦斯
+async def scvBackToRefinery(self):
+    for refinery in self.gas_buildings:
+        worker: Units = self.workers.closer_than(10, refinery)
+        worker.random.gather(refinery)
+
+
+# 枪兵攻击敌人
 async def marineAttack(self):
-    target: Point2 = self.select_target()
+    target: Point2 = select_target(self)
     forces: Units = self.units(UnitTypeId.MARINE)
     for unit in forces:
         unit.attack(target)
+
+async def cycloneAttack(self):
+    target: Point2 = select_target(self)
+    forces: Units = self.units(UnitTypeId.CYCLONE)
+    for unit in forces:
+        unit.attack(target)
+
+
+
+

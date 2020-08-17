@@ -61,16 +61,17 @@ class ProxyRaxBot(sc2.BotAI):
 
 
 def main():
-    '''sc2.run_game(
-        sc2.maps.get("(2)CatalystLE"),
-        [Bot(Race.Terran, ProxyRaxBot()), Computer(Race.Zerg, Difficulty.Hard)],
-        realtime=False,
-    )'''
-    sc2.run_game(
-        sc2.maps.get("AutomatonLE"),
-        [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, ProxyRaxBot())],
-        realtime=True
-    )
+    for i in range(2):
+        sc2.run_game(
+            sc2.maps.get("AutomatonLE"),
+            [Bot(Race.Terran, ProxyRaxBot()), Computer(Race.Zerg, Difficulty.Hard)],
+            realtime=False,
+        )
+    # sc2.run_game(
+    #     sc2.maps.get("AutomatonLE"),
+    #     [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, ProxyRaxBot())],
+    #     realtime=True
+    # )
 
 if __name__ == "__main__":
     main()
