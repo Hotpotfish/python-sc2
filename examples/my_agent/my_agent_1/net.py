@@ -39,16 +39,16 @@ class net(object):
             with slim.arg_scope([slim.conv2d, slim.fully_connected],
                                 trainable=train,
                                 activation_fn=tf.nn.relu,
-                                # normalizer_fn=slim.batch_norm,
+                                normalizer_fn=slim.batch_norm,
                                 weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
                                 weights_regularizer=slim.l2_regularizer(0.05)):
-                fc1 = slim.fully_connected(state_input, 60, scope='fc1')
+                fc1 = slim.fully_connected(state_input, 50, scope='fc1')
                 fc2 = slim.fully_connected(fc1, 30, scope='fc2')
                 action = slim.fully_connected(fc2, self.action_dim, activation_fn=tf.nn.softmax, scope='action_output')
                 return action
 
     def create_training_method(self, action_input, q_value, y_input):
-        Q_action = tf.reduce_sum(tf.multiply(q_value, action_input), reduction_indices=1)
+        Q_action = tf.reduce_sum(tf.multiply(q_value, action_input), axis=1)
         cost = tf.reduce_mean(tf.square(y_input - Q_action))
         train_op = tf.train.AdamOptimizer(self.learning_rate).minimize(cost)
         return train_op, cost
