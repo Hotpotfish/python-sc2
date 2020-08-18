@@ -45,20 +45,21 @@ class RL_Bot(sc2.BotAI):
         # print(iteration)
         # 62维
         self.current_state = get_state(self)
-        q = self.session.run(self.net.q, {self.net.state: self.current_state[np.newaxis]})[0]
+        q = self.session.run(self.net.q, {self.net.state: self.current_state[np.newaxis]})
 
         if random.random() <= self.current_epsilon:
-            self.action = random.randint(0, self.action_dim - 1)
+            self.action = random.randint(0, self.action_dim)
         else:
             self.action = np.argmax(q)
-        self.current_epsilon = - (self.init_epsilon - self.fin_epsilon) / (EPSIODES * 2000)
+        print(self.action)
+        self.current_epsilon -=  (self.init_epsilon - self.fin_epsilon) / (EPSIODES * 2000)
         # print(self.action)
         if self.next_state is not None:
             self.memory.inQueue([self.current_state, np.eye(self.action_dim)[self.action], 0, self.next_state, 0])
         await economic_action[self.action](self)
         self.next_state = self.current_state
 
-        if self.memory.real_size > BATCH_SIZE:
+        if self.memory.real_size > BATCH_SIZE * 50:
             minibatch = random.sample(self.memory.queue, BATCH_SIZE)
             state = np.array([data[0] for data in minibatch])
             action_batch = np.array([data[1] for data in minibatch])
@@ -66,11 +67,13 @@ class RL_Bot(sc2.BotAI):
             state_next = np.array([data[3] for data in minibatch])
             terminateds = np.array([data[4] for data in minibatch])
 
-            q_ = np.max(self.session.run(self.net.q_, {self.net.state_next: state_next}), axis=1)[:,np.newaxis]
+            q_ = np.max(self.session.run(self.net.q_, {self.net.state_next: state_next}), axis=1)[:, np.newaxis]
             y_input = np.squeeze(reward_batch[:, np.newaxis] + GAMMA * q_ * (np.array(abs(terminateds - 1))[:, np.newaxis]))
             self.session.run([self.net.trian_op, self.net.loss], {self.net.y_input: y_input,
                                                                   self.net.state: state,
                                                                   self.net.action_input: action_batch})
+            if iteration % 1000 == 0:
+                self.session.run(self.net.hard_replace)
 
 
 def main():

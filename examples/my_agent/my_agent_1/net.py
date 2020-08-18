@@ -26,6 +26,8 @@ class net(object):
 
         self.trian_op, self.loss = self.create_training_method(self.action_input, self.q, self.y_input)
 
+        self.hard_replace = [tf.assign(t, e) for t, e in zip(self.qt_params, self.qe_params)]
+
     def _setup_placeholders_graph(self):
         # s
         self.state = tf.placeholder("float", shape=[None, self.state_dim], name='state')
