@@ -121,9 +121,9 @@ class MarineSplitChallenge(sc2.BotAI):
 
 def main():
     sc2.run_game(
-        sc2.maps.get("Marine Split Challenge"),
+        sc2.maps.get("Marine Control v1.4"),
         [Bot(Race.Terran, MarineSplitChallenge())],
-        realtime=False,
+        realtime=True,
         save_replay_as="Example.SC2Replay",
     )
 

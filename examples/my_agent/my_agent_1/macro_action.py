@@ -10,6 +10,7 @@ from sc2.unit import Unit
 # 修建补给站
 async def buildSupplydepot(self):
     # 是否能承担
+
     if self.can_afford(UnitTypeId.SUPPLYDEPOT):
         CCs: Units = self.townhalls()
         # 指挥中心是否还在
@@ -26,12 +27,7 @@ async def buildSupplydepot(self):
                     if placement_position:
                         build_worker = worker_candidates.closest_to(placement_position)
                         build_worker.build(UnitTypeId.SUPPLYDEPOT, placement_position)
-                        return
-
-    # CCs: Units = self.townhalls()
-    # for cc in CCs:
-    #     # cc: Unit = CCs.first
-    #     await self.build(UnitTypeId.SUPPLYDEPOT, near=cc.position.towards(self.game_info.map_center, 8))
+                        # return
 
 
 # 修建兵营
@@ -59,7 +55,7 @@ async def buildBarracks(self):
 
 
 # 修建瓦斯矿场
-def buildRefinery(self):
+async def buildRefinery(self):
     # 是否能承担
     if self.can_afford(UnitTypeId.REFINERY):
         CCs: Units = self.townhalls()
@@ -101,11 +97,14 @@ async def buildFactory(self):
                             build_worker = worker_candidates.closest_to(placement_position)
                             build_worker.build(UnitTypeId.FACTORY, placement_position)
                             return
+
+
 async def expand(self):
     if self.can_afford(UnitTypeId.COMMANDCENTER):
         await self.expand_now()
 
-def trainScv(self):
+
+async def trainScv(self):
     if self.can_afford(UnitTypeId.SCV):
         if self.supply_left > 0:
             CCs: Units = self.townhalls()
@@ -117,7 +116,7 @@ def trainScv(self):
 
 
 # 训练枪兵（至少一个）
-def trainMarine(self):
+async def trainMarine(self):
     if self.structures(UnitTypeId.BARRACKS):
         for barracks in self.structures(UnitTypeId.BARRACKS).ready.idle:
             if self.can_afford(UnitTypeId.MARINE):
@@ -126,12 +125,12 @@ def trainMarine(self):
 
 
 # 训练暴风（至少一个）
-async def trainCyclone(self):
+async def trainHellion(self):
     if self.structures(UnitTypeId.FACTORY):
         for factory in self.structures(UnitTypeId.FACTORY).ready.idle:
-            if self.can_afford(UnitTypeId.CYCLONE):
+            if self.can_afford(UnitTypeId.HELLION):
                 if self.supply_left > 2:
-                    factory.train(UnitTypeId.CYCLONE)
+                    factory.train(UnitTypeId.HELLION)
 
 
 def select_target(self) -> Point2:
@@ -155,16 +154,28 @@ def select_target(self) -> Point2:
 
 # 回去采矿
 async def scvBackToMineral(self):
-    for scv in self.workers.idle:
-        cc: Units = self.townhalls().closest_to(scv)
-        scv.gather(self.mineral_field.closest_to(cc))
+    if self.workers.idle:
+        for scv in self.workers.idle:
+            if self.townhalls():
+                cc: Units = self.townhalls().closest_to(scv)
+                if cc:
+                    mineral_field_close = self.mineral_field.closest_to(cc)
+                    if mineral_field_close:
+                        if mineral_field_close.assigned_harvesters < mineral_field_close.ideal_harvesters:
+                            # worker: Units = self.workers.closer_than(10, refinery)
+                            scv.gather(mineral_field_close)
+
+        # scv.gather(self.mineral_field.closest_to(cc))
 
 
 # 回去采瓦斯
 async def scvBackToRefinery(self):
-    for refinery in self.gas_buildings:
-        worker: Units = self.workers.closer_than(10, refinery)
-        worker.random.gather(refinery)
+    if self.gas_buildings:
+        for refinery in self.gas_buildings:
+            if refinery.assigned_harvesters < refinery.ideal_harvesters:
+                worker: Units = self.workers.closer_than(10, refinery)
+                if worker:
+                    worker.random.gather(refinery)
 
 
 # 枪兵攻击敌人
@@ -174,12 +185,9 @@ async def marineAttack(self):
     for unit in forces:
         unit.attack(target)
 
-async def cycloneAttack(self):
+
+async def hellionAttack(self):
     target: Point2 = select_target(self)
-    forces: Units = self.units(UnitTypeId.CYCLONE)
+    forces: Units = self.units(UnitTypeId.HELLION)
     for unit in forces:
         unit.attack(target)
-
-
-
-

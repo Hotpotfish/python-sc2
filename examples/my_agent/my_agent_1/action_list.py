@@ -1,5 +1,4 @@
-from examples.my_agent.my_agent_1.macro_action import buildSupplydepot, buildBarracks, buildRefinery, buildFactory, trainMarine, trainCyclone, scvBackToMineral, scvBackToRefinery, marineAttack, \
-    trainScv, cycloneAttack, expand
+from examples.my_agent.my_agent_1.macro_action import *
 
 economic_action = [buildSupplydepot,
                    buildBarracks,
@@ -8,8 +7,8 @@ economic_action = [buildSupplydepot,
                    expand,
                    trainScv,
                    trainMarine,
-                   trainCyclone,
+                   trainHellion,
                    scvBackToMineral,
                    scvBackToRefinery,
                    marineAttack,
-                   cycloneAttack,]
+                   hellionAttack, ]

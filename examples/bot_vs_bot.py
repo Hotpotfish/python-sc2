@@ -1,8 +1,9 @@
 import sc2
+from examples.zerg.zerg_rush import ZergRushBot
 from sc2 import Race
 from sc2.player import Bot
 
-from zerg.zerg_rush import ZergRushBot
+# from zerg.zerg_rush import ZergRushBot
 
 
 def main():
