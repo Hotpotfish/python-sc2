@@ -48,11 +48,11 @@ class RL_Bot(sc2.BotAI):
         q = self.session.run(self.net.q, {self.net.state: self.current_state[np.newaxis]})
 
         if random.random() <= self.current_epsilon:
-            self.action = random.randint(0, self.action_dim)
+            self.action = random.randint(0, self.action_dim-1)
         else:
             self.action = np.argmax(q)
         print(self.action)
-        self.current_epsilon -=  (self.init_epsilon - self.fin_epsilon) / (EPSIODES * 2000)
+        self.current_epsilon -= (self.init_epsilon - self.fin_epsilon) / (EPSIODES * 2000)
         # print(self.action)
         if self.next_state is not None:
             self.memory.inQueue([self.current_state, np.eye(self.action_dim)[self.action], 0, self.next_state, 0])
@@ -82,7 +82,7 @@ def main():
     while n_epsiodes != 0:
         r = sc2.run_game(
             sc2.maps.get("Simple128"),
-            [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Protoss, Difficulty.VeryHard)],
+            [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Protoss, Difficulty.Easy)],
             realtime=False,
         )
         # sc2.Result

@@ -11,18 +11,21 @@ class SqQueue(object):
 
     def inQueue(self, n):
         # 入队 队列满直接覆盖
-        self.head = int((self.head + 1) % self.size)
+
         if self.real_size == self.size:
             self.queue[self.head] = n
         else:
             self.real_size += 1
             self.queue.append(n)
+        self.head = int((self.head + 1) % self.size)
 
     def deleteLastOne(self):
-        element = self.queue[int((self.head)-1)]
-        self.queue.remove(element)
-        self.head = (self.head - 1) % self.size
+        self.head = int((self.head - 1) % self.size)
         self.real_size -= 1
+        del self.queue[self.head]
+        # element = self.queue[self.head]
+        # self.queue.remove(element)
+        self.head =int((self.head - 1) % self.size)
 
     def empty(self):
         self.queue = []
