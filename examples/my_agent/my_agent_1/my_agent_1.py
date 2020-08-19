@@ -48,10 +48,9 @@ class RL_Bot(sc2.BotAI):
         q = self.session.run(self.net.q, {self.net.state: self.current_state[np.newaxis]})
 
         if random.random() <= self.current_epsilon:
-            self.action = random.randint(0, self.action_dim-1)
+            self.action = random.randint(0, self.action_dim - 1)
         else:
             self.action = np.argmax(q)
-        print(self.action)
         self.current_epsilon -= (self.init_epsilon - self.fin_epsilon) / (EPSIODES * 2000)
         # print(self.action)
         if self.next_state is not None:

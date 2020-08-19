@@ -1,14 +1,18 @@
 import random
+
+from examples.my_agent.my_agent_1.action_list import *
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 from sc2.units import Units
 from sc2.unit import Unit
 
+TRAIN_NUMBER = 2
+
 
 # 动作若无法执行直接输出no-op
 
 # 修建补给站
-async def buildSupplydepot(self):
+async def buildSupplydepot_mask(self):
     # 是否能承担
     if self.can_afford(UnitTypeId.SUPPLYDEPOT):
         CCs: Units = self.townhalls()
@@ -24,13 +28,12 @@ async def buildSupplydepot(self):
                     # Placement_position can be None
                     # 是否有合适的位置
                     if placement_position:
-                        build_worker = worker_candidates.closest_to(placement_position)
-                        build_worker.build(UnitTypeId.SUPPLYDEPOT, placement_position)
-                        # return
+                        return 1
+    return 0
 
 
 # 修建兵营
-async def buildBarracks(self):
+async def buildBarracks_mask(self):
     # 是否能承担
     if self.can_afford(UnitTypeId.BARRACKS):
         # 科技树依赖
@@ -48,13 +51,12 @@ async def buildBarracks(self):
                         # Placement_position can be None
                         # 是否有合适的位置
                         if placement_position:
-                            build_worker = worker_candidates.closest_to(placement_position)
-                            build_worker.build(UnitTypeId.BARRACKS, placement_position)
-                            return
+                            return 1
+    return 0
 
 
 # 修建瓦斯矿场
-async def buildRefinery(self):
+async def buildRefinery_mask(self):
     # 是否能承担
     if self.can_afford(UnitTypeId.REFINERY):
         CCs: Units = self.townhalls()
@@ -69,13 +71,12 @@ async def buildRefinery(self):
                         if self.gas_buildings.filter(lambda unit: unit.distance_to(vg) < 1):
                             continue
                         # 是否有合适的位置
-                        build_worker = worker_candidates.closest_to(vg)
-                        build_worker.build_gas(vg)
-                        return
+                        return 1
+    return 0
 
 
 # 修建重工厂
-async def buildFactory(self):
+async def buildFactory_mask(self):
     # 是否能承担
     if self.can_afford(UnitTypeId.FACTORY):
         # 科技树依赖
@@ -93,43 +94,49 @@ async def buildFactory(self):
                         # Placement_position can be None
                         # 是否有合适的位置
                         if placement_position:
-                            build_worker = worker_candidates.closest_to(placement_position)
-                            build_worker.build(UnitTypeId.FACTORY, placement_position)
-                            return
+                            return 1
+    return 0
 
 
-async def expand(self):
+async def expand_mask(self):
     if self.can_afford(UnitTypeId.COMMANDCENTER):
-        await self.expand_now()
+        return 1
+    return 0
 
 
-async def trainScv(self):
+async def trainScv_mask(self):
     if self.can_afford(UnitTypeId.SCV):
         if self.supply_left > 0:
             CCs: Units = self.townhalls()
             if CCs:
                 for cc in CCs:
                     if cc.is_idle:
-                        cc.train(UnitTypeId.SCV)
-                        return
+                        # cc.train(UnitTypeId.SCV)
+                        return 1
+    return 0
 
 
 # 训练枪兵（至少一个）
-async def trainMarine(self):
+async def trainMarine_mask(self):
     if self.structures(UnitTypeId.BARRACKS):
-        for barracks in self.structures(UnitTypeId.BARRACKS).ready.idle:
+        if self.structures(UnitTypeId.BARRACKS).ready.idle:
+            # for barracks in self.structures(UnitTypeId.BARRACKS).ready.idle:
             if self.can_afford(UnitTypeId.MARINE):
                 if self.supply_left > 0:
-                    barracks.train(UnitTypeId.MARINE)
+                    # barracks.train(UnitTypeId.MARINE)
+                    return 1
+    return 0
 
 
 # 训练暴风（至少一个）
-async def trainHellion(self):
+async def trainHellion_mask(self):
     if self.structures(UnitTypeId.FACTORY):
-        for factory in self.structures(UnitTypeId.FACTORY).ready.idle:
+        if self.structures(UnitTypeId.FACTORY).ready.idle:
             if self.can_afford(UnitTypeId.HELLION):
                 if self.supply_left > 2:
-                    factory.train(UnitTypeId.HELLION)
+                    # factory.train(UnitTypeId.HELLION)
+                    return 1
+    return 0
 
 
 def select_target(self) -> Point2:
@@ -151,8 +158,8 @@ def select_target(self) -> Point2:
     return self.mineral_field.random.position
 
 
-# 回去采矿
-async def scvBackToMineral(self):
+# 回去采矿（至少一个生效）
+async def scvBackToMineral_mask(self):
     if self.workers.idle:
         for scv in self.workers.idle:
             if self.townhalls():
@@ -162,31 +169,63 @@ async def scvBackToMineral(self):
                     if mineral_field_close:
                         if mineral_field_close.assigned_harvesters < mineral_field_close.ideal_harvesters:
                             # worker: Units = self.workers.closer_than(10, refinery)
-                            scv.gather(mineral_field_close)
+                            return 1
+    return 0
 
-        # scv.gather(self.mineral_field.closest_to(cc))
+    # scv.gather(self.mineral_field.closest_to(cc))
 
 
-# 回去采瓦斯
-async def scvBackToRefinery(self):
+# 回去采瓦斯（至少一个生效）
+async def scvBackToRefinery_mask(self):
     if self.gas_buildings:
         for refinery in self.gas_buildings:
             if refinery.assigned_harvesters < refinery.ideal_harvesters:
                 worker: Units = self.workers.closer_than(10, refinery)
                 if worker:
-                    worker.random.gather(refinery)
+                    return 1
+    return 0
 
 
 # 枪兵攻击敌人
-async def marineAttack(self):
-    target: Point2 = select_target(self)
+async def marineAttack_mask(self):
     forces: Units = self.units(UnitTypeId.MARINE)
-    for unit in forces:
-        unit.attack(target)
+    if forces:
+        return 1
+    return 0
 
 
-async def hellionAttack(self):
-    target: Point2 = select_target(self)
+async def hellionAttack_mask(self):
     forces: Units = self.units(UnitTypeId.HELLION)
-    for unit in forces:
-        unit.attack(target)
+    if forces:
+        return 1
+    return 0
+
+
+async def getMask(self):
+    mask = []
+    a_length = len(economic_action)
+    for i in range(a_length):
+        if economic_action[i] == buildSupplydepot:
+            mask.append(buildSupplydepot_mask(self))
+        if economic_action[i] == buildBarracks:
+            mask.append(buildBarracks_mask(self))
+        if economic_action[i] == buildRefinery:
+            mask.append(buildRefinery_mask(self))
+        if economic_action[i] == buildFactory:
+            mask.append(buildFactory_mask(self))
+        if economic_action[i] == expand:
+            mask.append(expand_mask(self))
+        if economic_action[i] == trainScv:
+            mask.append(trainScv_mask(self))
+        if economic_action[i] == trainMarine:
+            mask.append(trainMarine_mask(self))
+        if economic_action[i] == trainHellion:
+            mask.append(trainHellion_mask(self))
+        if economic_action[i] == scvBackToMineral:
+            mask.append(scvBackToMineral_mask(self))
+        if economic_action[i] == scvBackToRefinery:
+            mask.append(scvBackToRefinery_mask(self))
+        if economic_action[i] == marineAttack:
+            mask.append(marineAttack_mask(self))
+        if economic_action[i] == hellionAttack:
+            mask.append(hellionAttack_mask(self))
