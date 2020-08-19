@@ -14,21 +14,22 @@ TRAIN_NUMBER = 2
 # 修建补给站
 async def buildSupplydepot_mask(self):
     # 是否能承担
-    if self.can_afford(UnitTypeId.SUPPLYDEPOT):
-        CCs: Units = self.townhalls()
-        # 指挥中心是否还在
-        if CCs:
-            worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
-            # 是否有空闲工人
-            if worker_candidates:
-                for cc in CCs:
-                    map_center = self.game_info.map_center
-                    position_towards_map_center = cc.position.towards(map_center, distance=8)
-                    placement_position = await self.find_placement(UnitTypeId.SUPPLYDEPOT, near=position_towards_map_center)
-                    # Placement_position can be None
-                    # 是否有合适的位置
-                    if placement_position:
-                        return 1
+    if self.supply_cap < 200 and self.supply_left < 10:
+        if self.can_afford(UnitTypeId.SUPPLYDEPOT):
+            CCs: Units = self.townhalls()
+            # 指挥中心是否还在
+            if CCs:
+                worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
+                # 是否有空闲工人
+                if worker_candidates:
+                    for cc in CCs:
+                        map_center = self.game_info.map_center
+                        position_towards_map_center = cc.position.towards(map_center, distance=8)
+                        placement_position = await self.find_placement(UnitTypeId.SUPPLYDEPOT, near=position_towards_map_center)
+                        # Placement_position can be None
+                        # 是否有合适的位置
+                        if placement_position:
+                            return 1
     return 0
 
 
@@ -106,9 +107,9 @@ async def expand_mask(self):
 
 async def trainScv_mask(self):
     if self.can_afford(UnitTypeId.SCV):
-        if self.supply_left > 0:
+        if self.supply_left > 0 :
             CCs: Units = self.townhalls()
-            if CCs:
+            if CCs and len(self.units(UnitTypeId.SCV)) < 22 * len(CCs):
                 for cc in CCs:
                     if cc.is_idle:
                         # cc.train(UnitTypeId.SCV)
@@ -205,27 +206,30 @@ async def getMask(self):
     mask = []
     a_length = len(economic_action)
     for i in range(a_length):
+        if economic_action[i] == doNothing:
+            mask.append(1)
         if economic_action[i] == buildSupplydepot:
-            mask.append(buildSupplydepot_mask(self))
+            mask.append(await buildSupplydepot_mask(self))
         if economic_action[i] == buildBarracks:
-            mask.append(buildBarracks_mask(self))
+            mask.append(await buildBarracks_mask(self))
         if economic_action[i] == buildRefinery:
-            mask.append(buildRefinery_mask(self))
+            mask.append(await buildRefinery_mask(self))
         if economic_action[i] == buildFactory:
-            mask.append(buildFactory_mask(self))
+            mask.append(await buildFactory_mask(self))
         if economic_action[i] == expand:
-            mask.append(expand_mask(self))
+            mask.append(await expand_mask(self))
         if economic_action[i] == trainScv:
-            mask.append(trainScv_mask(self))
+            mask.append(await trainScv_mask(self))
         if economic_action[i] == trainMarine:
-            mask.append(trainMarine_mask(self))
+            mask.append(await trainMarine_mask(self))
         if economic_action[i] == trainHellion:
-            mask.append(trainHellion_mask(self))
+            mask.append(await trainHellion_mask(self))
         if economic_action[i] == scvBackToMineral:
-            mask.append(scvBackToMineral_mask(self))
+            mask.append(await scvBackToMineral_mask(self))
         if economic_action[i] == scvBackToRefinery:
-            mask.append(scvBackToRefinery_mask(self))
+            mask.append(await scvBackToRefinery_mask(self))
         if economic_action[i] == marineAttack:
-            mask.append(marineAttack_mask(self))
+            mask.append(await marineAttack_mask(self))
         if economic_action[i] == hellionAttack:
-            mask.append(hellionAttack_mask(self))
+            mask.append(await hellionAttack_mask(self))
+    return mask

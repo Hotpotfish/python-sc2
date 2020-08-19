@@ -4,6 +4,7 @@ from examples.my_agent.my_agent_1.SqQueue import SqQueue
 from examples.my_agent.my_agent_1.action_list import economic_action
 from examples.my_agent.my_agent_1.get_reward import get_reward
 from examples.my_agent.my_agent_1.get_state import get_state
+from examples.my_agent.my_agent_1.macro_action_mask import getMask
 from examples.my_agent.my_agent_1.net import net
 import numpy as np
 
@@ -45,10 +46,13 @@ class RL_Bot(sc2.BotAI):
         # print(iteration)
         # 62维
         self.current_state = get_state(self)
-        q = self.session.run(self.net.q, {self.net.state: self.current_state[np.newaxis]})
+        q = np.array(self.session.run(self.net.q, {self.net.state: self.current_state[np.newaxis]})[0])
+        mask = await getMask(self)
+
+        q = q * mask
 
         if random.random() <= self.current_epsilon:
-            self.action = random.randint(0, self.action_dim - 1)
+            self.action = np.random.choice(np.nonzero(np.array(mask))[0])
         else:
             self.action = np.argmax(q)
         self.current_epsilon -= (self.init_epsilon - self.fin_epsilon) / (EPSIODES * 2000)
@@ -80,13 +84,15 @@ def main():
     n_epsiodes = EPSIODES
     while n_epsiodes != 0:
         r = sc2.run_game(
+
             sc2.maps.get("Simple128"),
             [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.Easy)],
             realtime=False,
+            disable_fog=True
         )
         # sc2.Result
         reward = get_reward(r)
-        rlBot.memory.deleteLastOne()
+        # rlBot.memory.deleteLastOne()
         rlBot.memory.inQueue([rlBot.current_state, np.eye(rlBot.action_dim)[rlBot.action], reward, rlBot.next_state, 1])
         rlBot.current_state = None
         rlBot.action = None
