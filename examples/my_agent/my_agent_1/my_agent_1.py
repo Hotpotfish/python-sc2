@@ -16,7 +16,7 @@ from sc2 import Race, Difficulty
 from sc2.player import Bot, Computer
 
 EPSIODES = 2000
-BATCH_SIZE = 32
+BATCH_SIZE = 1024
 GAMMA = 0.99
 
 
@@ -33,11 +33,11 @@ class RL_Bot(sc2.BotAI):
 
         self.action_dim = len(economic_action)
 
-        self.init_epsilon = 0.5
+        self.init_epsilon = 1
         self.fin_epsilon = 0.01
         self.current_epsilon = self.init_epsilon
 
-        self.net = net(0, 1, 1e-3, self.action_dim, 62, 'net')
+        self.net = net(0, 1, 1e-2, self.action_dim, 62, 'net')
         self.session = tf.Session()
         self.session.run(tf.initialize_all_variables())
 
@@ -59,7 +59,7 @@ class RL_Bot(sc2.BotAI):
         await economic_action[self.action](self)
         self.next_state = self.current_state
 
-        if self.memory.real_size > BATCH_SIZE * 50:
+        if self.memory.real_size > BATCH_SIZE * 200:
             minibatch = random.sample(self.memory.queue, BATCH_SIZE)
             state = np.array([data[0] for data in minibatch])
             action_batch = np.array([data[1] for data in minibatch])
@@ -82,7 +82,7 @@ def main():
     while n_epsiodes != 0:
         r = sc2.run_game(
             sc2.maps.get("Simple128"),
-            [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Protoss, Difficulty.Easy)],
+            [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.Easy)],
             realtime=False,
         )
         # sc2.Result
