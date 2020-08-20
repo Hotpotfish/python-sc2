@@ -4,6 +4,7 @@ economic_action = [
     doNothing,
     buildSupplydepot,
     buildBarracks,
+    buildBarracksReactor,
     buildRefinery,
     buildFactory,
     expand,

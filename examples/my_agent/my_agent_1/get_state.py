@@ -43,6 +43,7 @@ def get_state(self):
             len(self.units(UnitTypeId.WIDOWMINE)) / PL,
             len(self.units(UnitTypeId.LIBERATOR)) / PL,
             len(self.units(UnitTypeId.CYCLONE)) / PL,
+            len(self.units(UnitTypeId.BATTLECRUISER)) / PL,
 
 
 
@@ -60,6 +61,7 @@ def get_state(self):
             len(self.enemy_units(UnitTypeId.WIDOWMINE)) / PL,
             len(self.enemy_units(UnitTypeId.LIBERATOR)) / PL,
             len(self.enemy_units(UnitTypeId.CYCLONE)) / PL,
+            len(self.enemy_units(UnitTypeId.BATTLECRUISER)) / PL,
 
             len(self.enemy_structures(UnitTypeId.COMMANDCENTER)) / 10,
             len(self.enemy_structures(UnitTypeId.SUPPLYDEPOT)) / 10,

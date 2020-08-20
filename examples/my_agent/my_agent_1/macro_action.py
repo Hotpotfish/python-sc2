@@ -3,7 +3,7 @@ from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 from sc2.units import Units
 from sc2.unit import Unit
-
+from typing import Tuple, List
 from sklearn.cluster import k_means
 from sklearn.cluster import KMeans
 
@@ -53,6 +53,30 @@ async def buildBarracks(self):
         build_worker.build(UnitTypeId.BARRACKS, placement_position)
         return
 
+def points_to_build_addon(sp_position: Point2) -> List[Point2]:
+        """ Return all points that need to be checked when trying to build an addon. Returns 4 points. """
+        addon_offset: Point2 = Point2((2.5, -0.5))
+        addon_position: Point2 = sp_position + addon_offset
+        addon_points = [
+            (addon_position + Point2((x - 0.5, y - 0.5))).rounded for x in range(0, 2) for y in range(0, 2)
+        ]
+        return addon_points
+
+
+async def buildBarracksReactor(self):
+    for Barracks in self.structures(UnitTypeId.BARRACKS).ready:
+        if not Barracks.has_add_on and self.can_afford(UnitTypeId.BARRACKSREACTOR):
+            addon_points = points_to_build_addon(Barracks.position)
+            if all(
+                    self.in_map_bounds(addon_point)
+                    and self.in_placement_grid(addon_point)
+                    and self.in_pathing_grid(addon_point)
+                    for addon_point in addon_points
+            ):
+                Barracks.build(UnitTypeId.BARRACKSREACTOR)
+            # else:
+            #     sp(AbilityId.LIFT)
+
 
 # 修建瓦斯矿场
 async def buildRefinery(self):
@@ -101,16 +125,74 @@ async def trainScv(self):
 
 # 训练枪兵（至少一个）
 async def trainMarine(self):
-    for barracks in self.structures(UnitTypeId.BARRACKS).ready.idle:
+    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
         barracks.train(UnitTypeId.MARINE)
         return
 
-    # 训练暴风（至少一个）
+
+async def trainMarauder(self):
+    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
+        barracks.train(UnitTypeId.Marauder)
+        return
 
 
 async def trainHellion(self):
-    for factory in self.structures(UnitTypeId.FACTORY).ready.idle:
+    for factory in self.structures(UnitTypeId.FACTORY).ready:
         factory.train(UnitTypeId.HELLION)
+        return
+
+
+async def trainGhost(self):
+    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
+        barracks.train(UnitTypeId.GHOST)
+        return
+
+
+async def trainViking(self):
+    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
+        barracks.train(UnitTypeId.VIKING)
+        return
+
+
+async def trainThor(self):
+    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
+        barracks.train(UnitTypeId.THOR)
+        return
+
+
+async def trainRaven(self):
+    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
+        barracks.train(UnitTypeId.RAVEN)
+        return
+
+
+async def trainBanshee(self):
+    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
+        barracks.train(UnitTypeId.BANSHEE)
+        return
+
+
+async def trainWidowmine(self):
+    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
+        barracks.train(UnitTypeId.WIDOWMINE)
+        return
+
+
+async def trainLiberator(self):
+    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
+        barracks.train(UnitTypeId.LIBERATOR)
+        return
+
+
+async def trainCyclone(self):
+    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
+        barracks.train(UnitTypeId.CYCLON)
+        return
+
+
+async def trainBattlecruiser(self):
+    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
+        barracks.train(UnitTypeId.BATTLECRUISER)
         return
 
 

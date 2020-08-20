@@ -56,6 +56,20 @@ async def buildBarracks_mask(self):
     return 0
 
 
+async def buildBarracksReactor_mask(self):
+    for Barracks in self.structures(UnitTypeId.BARRACKS).ready:
+        if not Barracks.has_add_on and self.can_afford(UnitTypeId.BARRACKSREACTOR):
+            addon_points = points_to_build_addon(Barracks.position)
+            if all(
+                    self.in_map_bounds(addon_point)
+                    and self.in_placement_grid(addon_point)
+                    and self.in_pathing_grid(addon_point)
+                    for addon_point in addon_points
+            ):
+                return 1
+    return 0
+
+
 # 修建瓦斯矿场
 async def buildRefinery_mask(self):
     # 是否能承担
@@ -120,8 +134,8 @@ async def trainScv_mask(self):
 # 训练枪兵（至少一个）
 async def trainMarine_mask(self):
     if self.structures(UnitTypeId.BARRACKS):
-        if self.structures(UnitTypeId.BARRACKS).ready.idle:
-            # for barracks in self.structures(UnitTypeId.BARRACKS).ready.idle:
+        if self.structures(UnitTypeId.BARRACKS).ready:
+            # for barracks in self.structures(UnitTypeId.BARRACKS).ready:
             if self.can_afford(UnitTypeId.MARINE):
                 if self.supply_left >= 0:
                     # barracks.train(UnitTypeId.MARINE)
@@ -132,7 +146,7 @@ async def trainMarine_mask(self):
 # 训练暴风（至少一个）
 async def trainHellion_mask(self):
     if self.structures(UnitTypeId.FACTORY):
-        if self.structures(UnitTypeId.FACTORY).ready.idle:
+        if self.structures(UnitTypeId.FACTORY).ready:
             if self.can_afford(UnitTypeId.HELLION):
                 if self.supply_left >= 2:
                     # factory.train(UnitTypeId.HELLION)
@@ -251,6 +265,8 @@ async def getMask(self):
             mask.append(1)
         if economic_action[i] == buildSupplydepot:
             mask.append(await buildSupplydepot_mask(self))
+        if economic_action[i] == buildBarracksReactor:
+            mask.append(await buildBarracksReactor_mask(self))
         if economic_action[i] == buildBarracks:
             mask.append(await buildBarracks_mask(self))
         if economic_action[i] == buildRefinery:

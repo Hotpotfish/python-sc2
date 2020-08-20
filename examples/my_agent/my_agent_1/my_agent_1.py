@@ -14,7 +14,7 @@ import random
 
 import sc2
 from sc2 import Race, Difficulty
-from sc2.player import Bot, Computer
+from sc2.player import Bot, Computer, Human
 
 EPSIODES = 2000
 BATCH_SIZE = 1024
@@ -38,7 +38,7 @@ class RL_Bot(sc2.BotAI):
         self.fin_epsilon = 0.01
         self.current_epsilon = self.init_epsilon
 
-        self.net = net(0, 1, 1e-2, self.action_dim, 62, 'net')
+        self.net = net(0, 1, 1e-2, self.action_dim, 64, 'net')
         self.session = tf.Session()
         self.session.run(tf.initialize_all_variables())
 
@@ -86,10 +86,15 @@ def main():
         r = sc2.run_game(
 
             sc2.maps.get("Simple128"),
-            [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.MediumHard)],
+            [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.Medium)],
             realtime=False,
             # disable_fog=True
         )
+        # r = sc2.run_game(
+        #     sc2.maps.get("AutomatonLE"),
+        #     [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, rlBot, name="RL_bot")],
+        #     realtime=True
+        # )
         # sc2.Result
         reward = get_reward(r)
         # rlBot.memory.deleteLastOne()
