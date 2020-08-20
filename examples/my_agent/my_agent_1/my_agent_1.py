@@ -86,9 +86,9 @@ def main():
         r = sc2.run_game(
 
             sc2.maps.get("Simple128"),
-            [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.Easy)],
+            [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.MediumHard)],
             realtime=False,
-            disable_fog=True
+            # disable_fog=True
         )
         # sc2.Result
         reward = get_reward(r)

@@ -4,6 +4,9 @@ from sc2.position import Point2
 from sc2.units import Units
 from sc2.unit import Unit
 
+from sklearn.cluster import k_means
+from sklearn.cluster import KMeans
+
 
 # 动作若无法执行直接输出no-op
 async def doNothing(self):
@@ -154,19 +157,110 @@ async def scvBackToRefinery(self):
             # 枪兵攻击敌人
 
 
-async def attackZone(self):
-    pass
-
-
-async def marineAttack(self):
-    target: Point2 = select_target(self)
-    forces: Units = self.units(UnitTypeId.MARINE)
+# 攻击任意一个矿点
+async def detectionAndAttack(self):
+    forces: Units = self.units
     for unit in forces:
-        unit.attack(target)
+        if unit.type_id == UnitTypeId.SCV:
+            continue
+        unit.attack(self.mineral_field.random.position)
 
 
-async def hellionAttack(self):
-    target: Point2 = select_target(self)
-    forces: Units = self.units(UnitTypeId.HELLION)
+async def massNearEnemyBase(self):
+    if self.enemy_structures(UnitTypeId.COMMANDCENTER):
+        eCCs = self.enemy_structures(UnitTypeId.COMMANDCENTER)
+        cc: Unit = eCCs.random
+
+        map_center = self.game_info.map_center
+        position_towards_map_center = cc.position.towards(map_center, distance=30)
+        forces: Units = self.units
+        for unit in forces:
+            if unit.type_id == UnitTypeId.SCV:
+                continue
+            unit.attack(position_towards_map_center)
+    else:
+        enemy_structure_Nearest = self.enemy_structures.in_closest_distance_to_group(self.structures)
+        # targets = self.enemy_structures
+        map_center = self.game_info.map_center
+        position_towards_map_center = enemy_structure_Nearest.position.towards(map_center, distance=20)
+        forces: Units = self.units
+        for unit in forces:
+            if unit.type_id == UnitTypeId.SCV:
+                continue
+            unit.attack(position_towards_map_center)
+
+
+async def massNearBase(self):
+    CCs = self.townhalls()
+    cc: Unit = CCs.random
+    map_center = self.game_info.map_center
+    position_towards_map_center = cc.position.towards(map_center, distance=15)
+    forces: Units = self.units
     for unit in forces:
-        unit.attack(target)
+        if unit.type_id == UnitTypeId.SCV:
+            continue
+        unit.move(position_towards_map_center)
+
+
+async def retreat(self):
+    CCs = self.townhalls()
+    cc: Unit = CCs.random
+    map_center = self.game_info.map_center
+    position_towards_map_center = cc.position.towards(map_center, distance=10)
+    forces: Units = self.units
+    for unit in forces:
+        if unit.type_id == UnitTypeId.SCV:
+            continue
+        unit.move(position_towards_map_center)
+
+
+async def defence(self):
+    structures = next((structures for structures in self.structures), None)
+    close_enemy = self.enemy_units.closest_to(structures)
+    forces: Units = self.units
+    for unit in forces:
+        if unit.type_id == UnitTypeId.SCV:
+            continue
+        unit.attack(close_enemy.position)
+
+
+def getMaxNum(arry):
+    temparry = {}  # 保存处理后的数据
+    times = 0  # 保存最高的那个次数
+    for i in arry:
+        if (temparry.get(i) == None):  # 若值为空
+            # temparry追加一个元素
+            temparry.setdefault(i, 1)
+        else:
+            temparry[i] += 1  # 键对应的值+1
+    for k, v in temparry.items():
+        if v > times:
+            times = v
+    return [k for k, v in temparry.items() if v == times]
+
+
+async def attackEnemySquad(self):
+    if len(self.enemy_units) > 3:
+        enemy_coordinates = [[enemy.position.x, enemy.position.y] for enemy in self.enemy_units]
+        keams_ememy = KMeans(n_clusters=3, random_state=0).fit(enemy_coordinates)
+        squad = getMaxNum(keams_ememy.labels_)[0]
+        position = Point2(keams_ememy.cluster_centers_[squad])
+        forces: Units = self.units
+        for unit in forces:
+            if unit.type_id == UnitTypeId.SCV:
+                continue
+            unit.attack(position)
+    else:
+        targets = self.enemy_units
+        if targets:
+            return targets.random.position
+
+
+async def attackNearestBase(self):
+    enemy_structure_Nearest = self.enemy_structures.in_closest_distance_to_group(self.structures)
+    # target: Point2 = select_target(self)
+    forces: Units = self.units
+    for unit in forces:
+        if unit.type_id == UnitTypeId.SCV:
+            continue
+        unit.attack(enemy_structure_Nearest.position)

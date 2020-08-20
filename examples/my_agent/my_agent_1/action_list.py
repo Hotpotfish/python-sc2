@@ -12,5 +12,11 @@ economic_action = [
     trainHellion,
     scvBackToMineral,
     scvBackToRefinery,
-    marineAttack,
-    hellionAttack, ]
+    detectionAndAttack,
+    massNearEnemyBase,
+    # massNearBase,
+    retreat,
+    defence,
+    attackEnemySquad,
+    attackNearestBase
+]

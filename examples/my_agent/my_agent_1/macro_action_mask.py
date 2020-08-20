@@ -107,7 +107,7 @@ async def expand_mask(self):
 
 async def trainScv_mask(self):
     if self.can_afford(UnitTypeId.SCV):
-        if self.supply_left > 0 :
+        if self.supply_left > 0:
             CCs: Units = self.townhalls()
             if CCs and len(self.units(UnitTypeId.SCV)) < 22 * len(CCs):
                 for cc in CCs:
@@ -123,7 +123,7 @@ async def trainMarine_mask(self):
         if self.structures(UnitTypeId.BARRACKS).ready.idle:
             # for barracks in self.structures(UnitTypeId.BARRACKS).ready.idle:
             if self.can_afford(UnitTypeId.MARINE):
-                if self.supply_left > 0:
+                if self.supply_left >= 0:
                     # barracks.train(UnitTypeId.MARINE)
                     return 1
     return 0
@@ -134,7 +134,7 @@ async def trainHellion_mask(self):
     if self.structures(UnitTypeId.FACTORY):
         if self.structures(UnitTypeId.FACTORY).ready.idle:
             if self.can_afford(UnitTypeId.HELLION):
-                if self.supply_left > 2:
+                if self.supply_left >= 2:
                     # factory.train(UnitTypeId.HELLION)
                     return 1
     return 0
@@ -187,18 +187,59 @@ async def scvBackToRefinery_mask(self):
     return 0
 
 
-# 枪兵攻击敌人
-async def marineAttack_mask(self):
-    forces: Units = self.units(UnitTypeId.MARINE)
-    if forces:
-        return 1
+async def detectionAndAttack_mask(self):
+    if self.mineral_field:
+        if not self.enemy_structures:
+            if not self.enemy_units:
+                if self.supply_army > 0:
+                    return 1
     return 0
 
 
-async def hellionAttack_mask(self):
-    forces: Units = self.units(UnitTypeId.HELLION)
-    if forces:
-        return 1
+async def massNearEnemyBase_mask(self):
+    if self.enemy_structures:
+        if self.supply_army > 10:
+            return 1
+    return 0
+
+
+async def massNearBase_mask(self):
+    if self.townhalls():
+        if self.supply_army > 10:
+            return 1
+    return 0
+
+
+async def retreat_mask(self):
+    if self.townhalls():
+        if self.supply_army < 10:
+            return 1
+    return 0
+
+
+async def defence_mask(self):
+    if self.supply_army > 0:
+        if self.structures:
+            if self.enemy_units:
+                # close_enemy = self.enemy_units.closest_to(self.structures)
+                enemy_units = next((unit for unit in self.enemy_units), None)
+                if self.structures.closest_distance_to(enemy_units) < 10:
+                    return 1
+    return 0
+
+
+async def attackEnemySquad_mask(self):
+    if self.supply_army > 20:
+        if self.enemy_units:
+            return 1
+    return 0
+
+
+async def attackNearestBase_mask(self):
+    if self.enemy_structures:
+        if self.structures:
+            if self.supply_army > 10:
+                return 1
     return 0
 
 
@@ -228,8 +269,18 @@ async def getMask(self):
             mask.append(await scvBackToMineral_mask(self))
         if economic_action[i] == scvBackToRefinery:
             mask.append(await scvBackToRefinery_mask(self))
-        if economic_action[i] == marineAttack:
-            mask.append(await marineAttack_mask(self))
-        if economic_action[i] == hellionAttack:
-            mask.append(await hellionAttack_mask(self))
+        if economic_action[i] == detectionAndAttack:
+            mask.append(await detectionAndAttack_mask(self))
+        if economic_action[i] == massNearEnemyBase:
+            mask.append(await massNearEnemyBase_mask(self))
+        if economic_action[i] == massNearBase:
+            mask.append(await massNearBase_mask(self))
+        if economic_action[i] == retreat:
+            mask.append(await retreat_mask(self))
+        if economic_action[i] == defence:
+            mask.append(await defence_mask(self))
+        if economic_action[i] == attackEnemySquad:
+            mask.append(await attackEnemySquad_mask(self))
+        if economic_action[i] == attackNearestBase:
+            mask.append(await attackNearestBase_mask(self))
     return mask
