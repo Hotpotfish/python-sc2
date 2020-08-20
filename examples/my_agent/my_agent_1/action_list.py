@@ -5,6 +5,8 @@ economic_action = [
     buildSupplydepot,
     buildBarracks,
     buildBarracksReactor,
+    liftBarracks,
+    landAndBuildBarracksReactor,
     buildRefinery,
     buildFactory,
     expand,

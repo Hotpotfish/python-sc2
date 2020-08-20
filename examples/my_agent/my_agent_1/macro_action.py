@@ -1,4 +1,6 @@
 import random
+
+from sc2 import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.position import Point2
 from sc2.units import Units
@@ -53,19 +55,20 @@ async def buildBarracks(self):
         build_worker.build(UnitTypeId.BARRACKS, placement_position)
         return
 
+
 def points_to_build_addon(sp_position: Point2) -> List[Point2]:
-        """ Return all points that need to be checked when trying to build an addon. Returns 4 points. """
-        addon_offset: Point2 = Point2((2.5, -0.5))
-        addon_position: Point2 = sp_position + addon_offset
-        addon_points = [
-            (addon_position + Point2((x - 0.5, y - 0.5))).rounded for x in range(0, 2) for y in range(0, 2)
-        ]
-        return addon_points
+    """ Return all points that need to be checked when trying to build an addon. Returns 4 points. """
+    addon_offset: Point2 = Point2((2.5, -0.5))
+    addon_position: Point2 = sp_position + addon_offset
+    addon_points = [
+        (addon_position + Point2((x - 0.5, y - 0.5))).rounded for x in range(0, 2) for y in range(0, 2)
+    ]
+    return addon_points
 
 
 async def buildBarracksReactor(self):
     for Barracks in self.structures(UnitTypeId.BARRACKS).ready:
-        if not Barracks.has_add_on and self.can_afford(UnitTypeId.BARRACKSREACTOR):
+        if not Barracks.has_add_on:
             addon_points = points_to_build_addon(Barracks.position)
             if all(
                     self.in_map_bounds(addon_point)
@@ -74,8 +77,37 @@ async def buildBarracksReactor(self):
                     for addon_point in addon_points
             ):
                 Barracks.build(UnitTypeId.BARRACKSREACTOR)
-            # else:
-            #     sp(AbilityId.LIFT)
+
+
+async def liftBarracks(self):
+    for Barracks in self.structures(UnitTypeId.BARRACKS).idle:
+        if not Barracks.has_add_on:
+            Barracks(AbilityId.LIFT)
+            return
+
+
+def land_positions(sp_position: Point2) -> List[Point2]:
+    """ Return all points that need to be checked when trying to land at a location where there is enough space to build an addon. Returns 13 points. """
+    land_positions = [(sp_position + Point2((x, y))).rounded for x in range(-1, 2) for y in range(-1, 2)]
+    return land_positions + points_to_build_addon(sp_position)
+
+
+async def landAndBuildBarracksReactor(self):
+    for Barracks in self.structures(UnitTypeId.BARRACKSFLYING).idle:
+        possible_land_positions_offset = sorted(
+            (Point2((x, y)) for x in range(-10, 10) for y in range(-10, 10)),
+            key=lambda point: point.x ** 2 + point.y ** 2,
+        )
+        offset_point: Point2 = Point2((-0.5, -0.5))
+        possible_land_positions = (Barracks.position.rounded + offset_point + p for p in possible_land_positions_offset)
+        for target_land_position in possible_land_positions:
+            land_and_addon_points: List[Point2] = land_positions(target_land_position)
+            if all(
+                    self.in_map_bounds(land_pos) and self.in_placement_grid(land_pos) and self.in_pathing_grid(land_pos)
+                    for land_pos in land_and_addon_points
+            ):
+                Barracks(AbilityId.LAND, target_land_position)
+                return
 
 
 # 修建瓦斯矿场
