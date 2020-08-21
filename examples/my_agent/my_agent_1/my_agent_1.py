@@ -85,7 +85,7 @@ def main():
     while n_epsiodes != 0:
         r = sc2.run_game(
 
-            sc2.maps.get("PortAleksanderLE"),
+            sc2.maps.get("Flat128"),
             [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.Easy)],
             realtime=False,
             # disable_fog=True

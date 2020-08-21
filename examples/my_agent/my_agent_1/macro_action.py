@@ -529,6 +529,7 @@ async def detectionAndAttack(self):
         if unit.type_id == UnitTypeId.SCV:
             continue
         unit.attack(self.mineral_field.random.position)
+        return
 
 
 async def massNearEnemyBase(self):

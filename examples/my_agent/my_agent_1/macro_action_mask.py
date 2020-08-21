@@ -9,7 +9,8 @@ from sc2.unit import Unit
 TRAIN_NUMBER = 2
 ATTACK_FREQUENCY = 32
 BUILD_FREQUENCY = 32
-
+DETECTION_FREQUENCY = 256
+DISTRIBUTE_FREQUENCY = 32
 
 # 动作若无法执行直接输出no-op
 
@@ -473,7 +474,7 @@ async def landAndReadyToBuildStarportAddOn_mask(self):
 
 
 async def expand_mask(self):
-    if self.can_afford(UnitTypeId.COMMANDCENTER):
+    if self.can_afford(UnitTypeId.COMMANDCENTER) and self.expansion_locations_list:
         return 1
     return 0
 
@@ -642,13 +643,14 @@ async def trainBattlecruiser_mask(self):
 
 
 async def scvBackToWork_mask(self):
-    if self.workers.idle:
-        return 1
+    if self.state.game_loop % DISTRIBUTE_FREQUENCY == 0:
+        if self.workers.idle:
+            return 1
     return 0
 
 
 async def detectionAndAttack_mask(self):
-    if self.state.game_loop % ATTACK_FREQUENCY == 0:
+    if self.state.game_loop % DETECTION_FREQUENCY == 0:
         if self.mineral_field:
             if not self.enemy_structures:
                 if not self.enemy_units:
