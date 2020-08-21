@@ -72,7 +72,6 @@ async def buildSupplydepot(self):
 
 # 修建兵营
 async def buildBarracks(self):
-
     CCs: Units = self.townhalls()
 
     worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
@@ -138,8 +137,8 @@ async def landAndReadyToBuildBarracksAddOn(self):
                 Barracks(AbilityId.LAND, target_land_position)
                 return
 
-async def buildEngineeringbay(self):
 
+async def buildEngineeringbay(self):
     CCs: Units = self.townhalls()
 
     worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
@@ -153,6 +152,7 @@ async def buildEngineeringbay(self):
         build_worker = worker_candidates.closest_to(placement_position)
         build_worker.build(UnitTypeId.ENGINEERINGBAY, placement_position)
         return
+
 
 # 修建瓦斯矿场
 async def buildRefinery(self):
@@ -171,8 +171,6 @@ async def buildRefinery(self):
             return
 
 
-
-
 # 修建重工厂
 async def buildFactory(self):
     CCs: Units = self.townhalls()
@@ -188,6 +186,7 @@ async def buildFactory(self):
         build_worker = worker_candidates.closest_to(placement_position)
         build_worker.build(UnitTypeId.FACTORY, placement_position)
         return
+
 
 async def buildFactoryReactor(self):
     for factory in self.structures(UnitTypeId.FACTORY).ready:
@@ -240,7 +239,6 @@ async def landAndReadyToBuildFactoryAddOn(self):
                 return
 
 
-
 async def buildGhostAcademy(self):
     CCs: Units = self.townhalls()
     # 指挥中心是否还在
@@ -255,6 +253,7 @@ async def buildGhostAcademy(self):
         build_worker = worker_candidates.closest_to(placement_position)
         build_worker.build(UnitTypeId.GHOSTACADEMY, placement_position)
         return
+
 
 async def buildMissileturret(self):
     CCs: Units = self.townhalls()
@@ -271,6 +270,7 @@ async def buildMissileturret(self):
         build_worker.build(UnitTypeId.MISSILETURRET, placement_position)
         return
 
+
 async def buildSensortower(self):
     CCs: Units = self.townhalls()
     # 指挥中心是否还在
@@ -286,6 +286,7 @@ async def buildSensortower(self):
         build_worker.build(UnitTypeId.SENSORTOWER, placement_position)
         return
 
+
 async def buildBunker(self):
     CCs: Units = self.townhalls()
     # 指挥中心是否还在
@@ -300,6 +301,8 @@ async def buildBunker(self):
         build_worker = worker_candidates.closest_to(placement_position)
         build_worker.build(UnitTypeId.BUNKER, placement_position)
         return
+
+
 async def buildArmory(self):
     CCs: Units = self.townhalls()
     # 指挥中心是否还在
@@ -314,6 +317,8 @@ async def buildArmory(self):
         build_worker = worker_candidates.closest_to(placement_position)
         build_worker.build(UnitTypeId.ARMORY, placement_position)
         return
+
+
 async def buildFusioncore(self):
     CCs: Units = self.townhalls()
     # 指挥中心是否还在
@@ -329,6 +334,7 @@ async def buildFusioncore(self):
         build_worker.build(UnitTypeId.FUSIONCORE, placement_position)
         return
 
+
 async def buildStarport(self):
     CCs: Units = self.townhalls()
     # 指挥中心是否还在
@@ -343,6 +349,7 @@ async def buildStarport(self):
         build_worker = worker_candidates.closest_to(placement_position)
         build_worker.build(UnitTypeId.STARPORT, placement_position)
         return
+
 
 async def buildStarportReactor(self):
     for starport in self.structures(UnitTypeId.STARPORT).ready:
@@ -395,7 +402,6 @@ async def landAndReadyToBuildStarportAddOn(self):
                 return
 
 
-
 async def expand(self):
     await self.expand_now()
 
@@ -433,50 +439,56 @@ async def trainGhost(self):
 
 
 async def trainViking(self):
-    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
-        barracks.train(UnitTypeId.VIKING)
+    for starport in self.structures(UnitTypeId.STARPORT).ready:
+        starport.train(UnitTypeId.VIKING)
         return
 
 
 async def trainThor(self):
-    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
-        barracks.train(UnitTypeId.THOR)
+    for factory in self.structures(UnitTypeId.FACTORY).ready:
+        factory.train(UnitTypeId.THOR)
         return
 
 
 async def trainRaven(self):
-    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
-        barracks.train(UnitTypeId.RAVEN)
+    for starport in self.structures(UnitTypeId.STARPORT).ready:
+        starport.train(UnitTypeId.RAVEN)
+        return
+
+
+async def trainMedivac(self):
+    for starport in self.structures(UnitTypeId.STARPORT).ready:
+        starport.train(UnitTypeId.MEDIVAC)
         return
 
 
 async def trainBanshee(self):
-    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
-        barracks.train(UnitTypeId.BANSHEE)
+    for starport in self.structures(UnitTypeId.STARPORT).ready:
+        starport.train(UnitTypeId.BANSHEE)
         return
 
 
 async def trainWidowmine(self):
-    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
-        barracks.train(UnitTypeId.WIDOWMINE)
+    for factory in self.structures(UnitTypeId.FACTORY).ready:
+        factory.train(UnitTypeId.WIDOWMINE)
         return
 
 
 async def trainLiberator(self):
-    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
-        barracks.train(UnitTypeId.LIBERATOR)
+    for starport in self.structures(UnitTypeId.STARPORT).ready:
+        starport.train(UnitTypeId.LIBERATOR)
         return
 
 
 async def trainCyclone(self):
-    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
-        barracks.train(UnitTypeId.CYCLON)
+    for factory in self.structures(UnitTypeId.FACTORY).ready:
+        factory.train(UnitTypeId.CYCLON)
         return
 
 
 async def trainBattlecruiser(self):
-    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
-        barracks.train(UnitTypeId.BATTLECRUISER)
+    for starport in self.structures(UnitTypeId.STARPORT).ready:
+        starport.train(UnitTypeId.BATTLECRUISER)
         return
 
 

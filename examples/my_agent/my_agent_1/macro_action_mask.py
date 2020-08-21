@@ -40,7 +40,7 @@ async def buildSupplydepot_mask(self):
 async def buildBarracks_mask(self):
     if self.state.game_loop % BUILD_FREQUENCY:
         # 是否能承担
-        if self.can_afford(UnitTypeId.BARRACKS) and len(self.structures(UnitTypeId.BARRACKS)) <= 3:
+        if self.can_afford(UnitTypeId.BARRACKS) and (len(self.structures(UnitTypeId.BARRACKS)) + len(self.structures(UnitTypeId.BARRACKS)) <= 3):
             # 科技树依赖
             if self.structures(UnitTypeId.SUPPLYDEPOT) or self.structures(UnitTypeId.SUPPLYDEPOTLOWERED):
                 CCs: Units = self.townhalls()
@@ -166,7 +166,7 @@ async def buildRefinery_mask(self):
 async def buildFactory_mask(self):
     if self.state.game_loop % BUILD_FREQUENCY:
         # 是否能承担
-        if self.can_afford(UnitTypeId.FACTORY) and len(self.structures(UnitTypeId.FACTORY)) <= 3:
+        if self.can_afford(UnitTypeId.FACTORY) and (len(self.structures(UnitTypeId.FACTORY)) + len(self.structures(UnitTypeId.FACTORY)) <= 2):
             # 科技树依赖
             if self.structures(UnitTypeId.SUPPLYDEPOT) or self.structures(UnitTypeId.BARRACKS):
                 CCs: Units = self.townhalls()
@@ -248,7 +248,7 @@ async def landAndReadyToBuildFactoryAddOn_mask(self):
 async def buildGhostAcademy_mask(self):
     if self.state.game_loop % BUILD_FREQUENCY:
         # 是否能承担
-        if self.can_afford(UnitTypeId.GHOSTACADEMY) and len(self.structures(UnitTypeId.GHOSTACADEMY)) < 2:
+        if self.can_afford(UnitTypeId.GHOSTACADEMY) and not self.structures(UnitTypeId.GHOSTACADEMY) and not self.already_pending(UnitTypeId.GHOSTACADEMY):
             # 科技树依赖
             if (self.structures(UnitTypeId.SUPPLYDEPOT) or self.structures(UnitTypeId.SUPPLYDEPOTLOWERED)) and \
                     self.structures(UnitTypeId.BARRACKS or self.structures(UnitTypeId.BARRACKSFLYING)):
@@ -272,7 +272,7 @@ async def buildGhostAcademy_mask(self):
 async def buildMissileturret_mask(self):
     if self.state.game_loop % BUILD_FREQUENCY:
         # 是否能承担
-        if self.can_afford(UnitTypeId.MISSILETURRET) and len(self.structures(UnitTypeId.MISSILETURRET)) <= 3:
+        if self.can_afford(UnitTypeId.MISSILETURRET) and (len(self.structures(UnitTypeId.MISSILETURRET)) + len(self.structures(UnitTypeId.MISSILETURRET)) <= 1):
             # 科技树依赖
             if self.structures(UnitTypeId.ENGINEERINGBAY):
                 CCs: Units = self.townhalls()
@@ -295,7 +295,7 @@ async def buildMissileturret_mask(self):
 async def buildSensortower_mask(self):
     if self.state.game_loop % BUILD_FREQUENCY:
         # 是否能承担
-        if self.can_afford(UnitTypeId.SENSORTOWER) and len(self.structures(UnitTypeId.SENSORTOWER)) <= 1:
+        if self.can_afford(UnitTypeId.SENSORTOWER) and (len(self.structures(UnitTypeId.SENSORTOWER)) + len(self.structures(UnitTypeId.MISSILETURRET)) <= 1):
             # 科技树依赖
             if self.structures(UnitTypeId.ENGINEERINGBAY):
                 CCs: Units = self.townhalls()
@@ -318,7 +318,7 @@ async def buildSensortower_mask(self):
 async def buildBunker_mask(self):
     if self.state.game_loop % BUILD_FREQUENCY:
         # 是否能承担
-        if self.can_afford(UnitTypeId.BUNKER) and len(self.structures(UnitTypeId.BUNKER)) <= 2:
+        if self.can_afford(UnitTypeId.BUNKER) and (len(self.structures(UnitTypeId.BUNKER)) + len(self.structures(UnitTypeId.BUNKER)) <= 1):
             # 科技树依赖
             if self.structures(UnitTypeId.BARRACKS):
                 CCs: Units = self.townhalls()
@@ -341,7 +341,7 @@ async def buildBunker_mask(self):
 async def buildArmory_mask(self):
     if self.state.game_loop % BUILD_FREQUENCY:
         # 是否能承担
-        if self.can_afford(UnitTypeId.ARMORY) and len(self.structures(UnitTypeId.ARMORY)) <= 2:
+        if self.can_afford(UnitTypeId.ARMORY) and (len(self.structures(UnitTypeId.ARMORY)) + len(self.structures(UnitTypeId.ARMORY)) <= 2):
             # 科技树依赖
             if (self.structures(UnitTypeId.BARRACKS) or self.structures(UnitTypeId.BARRACKSFLYING)) and \
                     (self.structures(UnitTypeId.FACTORY) or self.structures(UnitTypeId.FACTORYFLYING)):
@@ -365,7 +365,7 @@ async def buildArmory_mask(self):
 async def buildFusioncore_mask(self):
     if self.state.game_loop % BUILD_FREQUENCY:
         # 是否能承担
-        if self.can_afford(UnitTypeId.FUSIONCORE) and len(self.structures(UnitTypeId.FUSIONCORE)) <= 1:
+        if self.can_afford(UnitTypeId.FUSIONCORE) and (len(self.structures(UnitTypeId.FUSIONCORE)) + len(self.structures(UnitTypeId.FUSIONCORE)) <= 1):
             # 科技树依赖
             if (self.structures(UnitTypeId.SUPPLYDEPOT) or self.structures(UnitTypeId.SUPPLYDEPOTLOWERED)) and \
                     (self.structures(UnitTypeId.BARRACKS) or self.structures(UnitTypeId.BARRACKSFLYING)) and \
@@ -391,7 +391,7 @@ async def buildFusioncore_mask(self):
 async def buildStarport_mask(self):
     if self.state.game_loop % BUILD_FREQUENCY:
         # 是否能承担
-        if self.can_afford(UnitTypeId.STARPORT) and len(self.structures(UnitTypeId.FACTORY)) <= 3:
+        if self.can_afford(UnitTypeId.STARPORT) and (len(self.structures(UnitTypeId.STARPORT)) + len(self.structures(UnitTypeId.STARPORT)) <= 2):
             # 科技树依赖
             if (self.structures(UnitTypeId.SUPPLYDEPOT) or self.structures(UnitTypeId.SUPPLYDEPOTLOWERED)) and \
                     (self.structures(UnitTypeId.BARRACKS) or self.structures(UnitTypeId.BARRACKSFLYING)) and \
@@ -480,7 +480,7 @@ async def expand_mask(self):
 
 async def trainScv_mask(self):
     if self.can_afford(UnitTypeId.SCV):
-        if self.supply_left > 0:
+        if self.supply_left >= 1:
             CCs: Units = self.townhalls()
             if CCs and len(self.units(UnitTypeId.SCV)) < 22 * len(CCs):
                 for cc in CCs:
@@ -494,10 +494,30 @@ async def trainScv_mask(self):
 async def trainMarine_mask(self):
     if self.structures(UnitTypeId.BARRACKS):
         if self.structures(UnitTypeId.BARRACKS).ready:
-            # for barracks in self.structures(UnitTypeId.BARRACKS).ready:
             if self.can_afford(UnitTypeId.MARINE):
-                if self.supply_left >= 0:
-                    # barracks.train(UnitTypeId.MARINE)
+                if self.supply_left >= 1:
+                    return 1
+    return 0
+
+
+async def trainMarauder_mask(self):
+    if self.structures(UnitTypeId.BARRACKS):
+        barracks_ready = self.structures(UnitTypeId.BARRACKS).ready
+        barracks_techlab_ready = barracks_ready.filter(lambda unit: unit.has_techlab == True)
+        if barracks_techlab_ready:
+            if self.can_afford(UnitTypeId.MARAUDER):
+                if self.supply_left >= 2:
+                    return 1
+    return 0
+
+
+async def trainGhost_mask(self):
+    if self.structures(UnitTypeId.BARRACKS) and self.structures(UnitTypeId.GHOSTACADEMY):
+        barracks_ready = self.structures(UnitTypeId.BARRACKS).ready
+        barracks_techlab_ready = barracks_ready.filter(lambda unit: unit.has_techlab == True)
+        if barracks_techlab_ready:
+            if self.can_afford(UnitTypeId.MARAUDER):
+                if self.supply_left >= 2:
                     return 1
     return 0
 
@@ -509,6 +529,17 @@ async def trainHellion_mask(self):
             if self.can_afford(UnitTypeId.HELLION):
                 if self.supply_left >= 2:
                     # factory.train(UnitTypeId.HELLION)
+                    return 1
+    return 0
+
+
+async def trainViking_mask(self):
+    if self.structures(UnitTypeId.STARPORT):
+        starport_ready = self.structures(UnitTypeId.STARPORT).ready
+        starport_techlab_ready = starport_ready.filter(lambda unit: unit.has_techlab == True)
+        if starport_techlab_ready:
+            if self.can_afford(UnitTypeId.VIKING):
+                if self.supply_left >= 2:
                     return 1
     return 0
 

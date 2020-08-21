@@ -85,7 +85,7 @@ def main():
     while n_epsiodes != 0:
         r = sc2.run_game(
 
-            sc2.maps.get("Simple128"),
+            sc2.maps.get("PortAleksanderLE"),
             [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.Easy)],
             realtime=False,
             # disable_fog=True
@@ -97,7 +97,7 @@ def main():
         # )
         # sc2.Result
         reward = get_reward(r)
-        # rlBot.memory.deleteLastOne()
+
         rlBot.memory.inQueue([rlBot.current_state, np.eye(rlBot.action_dim)[rlBot.action], reward, rlBot.next_state, 1])
         rlBot.current_state = None
         rlBot.action = None
