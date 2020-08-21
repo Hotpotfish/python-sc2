@@ -10,6 +10,41 @@ from sklearn.cluster import k_means
 from sklearn.cluster import KMeans
 
 
+def select_target(self) -> Point2:
+    # Pick a random enemy structure's position
+    targets = self.enemy_structures
+    if targets:
+        return targets.random.position
+
+    # Pick a random enemy unit's position
+    targets = self.enemy_units
+    if targets:
+        return targets.random.position
+
+    # Pick enemy start location if it has no friendly units nearby
+    if min([unit.distance_to(self.enemy_start_locations[0]) for unit in self.units]) > 5:
+        return self.enemy_start_locations[0]
+
+    # Pick a random mineral field on the map
+    return self.mineral_field.random.position
+
+
+def points_to_build_addon(sp_position: Point2) -> List[Point2]:
+    """ Return all points that need to be checked when trying to build an addon. Returns 4 points. """
+    addon_offset: Point2 = Point2((2.5, -0.5))
+    addon_position: Point2 = sp_position + addon_offset
+    addon_points = [
+        (addon_position + Point2((x - 0.5, y - 0.5))).rounded for x in range(0, 2) for y in range(0, 2)
+    ]
+    return addon_points
+
+
+def land_positions(sp_position: Point2) -> List[Point2]:
+    """ Return all points that need to be checked when trying to land at a location where there is enough space to build an addon. Returns 13 points. """
+    land_positions = [(sp_position + Point2((x, y))).rounded for x in range(-1, 2) for y in range(-1, 2)]
+    return land_positions + points_to_build_addon(sp_position)
+
+
 # 动作若无法执行直接输出no-op
 async def doNothing(self):
     return
@@ -37,9 +72,6 @@ async def buildSupplydepot(self):
 
 # 修建兵营
 async def buildBarracks(self):
-    # 是否能承担
-
-    # 科技树依赖
 
     CCs: Units = self.townhalls()
 
@@ -56,16 +88,6 @@ async def buildBarracks(self):
         return
 
 
-def points_to_build_addon(sp_position: Point2) -> List[Point2]:
-    """ Return all points that need to be checked when trying to build an addon. Returns 4 points. """
-    addon_offset: Point2 = Point2((2.5, -0.5))
-    addon_position: Point2 = sp_position + addon_offset
-    addon_points = [
-        (addon_position + Point2((x - 0.5, y - 0.5))).rounded for x in range(0, 2) for y in range(0, 2)
-    ]
-    return addon_points
-
-
 async def buildBarracksReactor(self):
     for Barracks in self.structures(UnitTypeId.BARRACKS).ready:
         if not Barracks.has_add_on:
@@ -79,6 +101,19 @@ async def buildBarracksReactor(self):
                 Barracks.build(UnitTypeId.BARRACKSREACTOR)
 
 
+async def buildBarracksTechlab(self):
+    for Barracks in self.structures(UnitTypeId.BARRACKS).ready:
+        if not Barracks.has_add_on:
+            addon_points = points_to_build_addon(Barracks.position)
+            if all(
+                    self.in_map_bounds(addon_point)
+                    and self.in_placement_grid(addon_point)
+                    and self.in_pathing_grid(addon_point)
+                    for addon_point in addon_points
+            ):
+                Barracks.build(UnitTypeId.BARRACKSTECHLAB)
+
+
 async def liftBarracks(self):
     for Barracks in self.structures(UnitTypeId.BARRACKS).idle:
         if not Barracks.has_add_on:
@@ -86,13 +121,7 @@ async def liftBarracks(self):
             return
 
 
-def land_positions(sp_position: Point2) -> List[Point2]:
-    """ Return all points that need to be checked when trying to land at a location where there is enough space to build an addon. Returns 13 points. """
-    land_positions = [(sp_position + Point2((x, y))).rounded for x in range(-1, 2) for y in range(-1, 2)]
-    return land_positions + points_to_build_addon(sp_position)
-
-
-async def landAndBuildBarracksReactor(self):
+async def landAndReadyToBuildBarracksAddOn(self):
     for Barracks in self.structures(UnitTypeId.BARRACKSFLYING).idle:
         possible_land_positions_offset = sorted(
             (Point2((x, y)) for x in range(-10, 10) for y in range(-10, 10)),
@@ -109,6 +138,21 @@ async def landAndBuildBarracksReactor(self):
                 Barracks(AbilityId.LAND, target_land_position)
                 return
 
+async def buildEngineeringbay(self):
+
+    CCs: Units = self.townhalls()
+
+    worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
+    # 是否有空闲工人
+    for cc in CCs:
+        map_center = self.game_info.map_center
+        position_towards_map_center = cc.position.towards(map_center, distance=8)
+        placement_position = await self.find_placement(UnitTypeId.ENGINEERINGBAY, near=position_towards_map_center)
+        # Placement_position can be None
+        # 是否有合适的位置
+        build_worker = worker_candidates.closest_to(placement_position)
+        build_worker.build(UnitTypeId.ENGINEERINGBAY, placement_position)
+        return
 
 # 修建瓦斯矿场
 async def buildRefinery(self):
@@ -127,6 +171,8 @@ async def buildRefinery(self):
             return
 
 
+
+
 # 修建重工厂
 async def buildFactory(self):
     CCs: Units = self.townhalls()
@@ -142,6 +188,212 @@ async def buildFactory(self):
         build_worker = worker_candidates.closest_to(placement_position)
         build_worker.build(UnitTypeId.FACTORY, placement_position)
         return
+
+async def buildFactoryReactor(self):
+    for factory in self.structures(UnitTypeId.FACTORY).ready:
+        if not factory.has_add_on:
+            addon_points = points_to_build_addon(factory.position)
+            if all(
+                    self.in_map_bounds(addon_point)
+                    and self.in_placement_grid(addon_point)
+                    and self.in_pathing_grid(addon_point)
+                    for addon_point in addon_points
+            ):
+                factory.build(UnitTypeId.FACTORYREACTOR)
+
+
+async def buildFactoryTechlab(self):
+    for factory in self.structures(UnitTypeId.FACTORY).ready:
+        if not factory.has_add_on:
+            addon_points = points_to_build_addon(factory.position)
+            if all(
+                    self.in_map_bounds(addon_point)
+                    and self.in_placement_grid(addon_point)
+                    and self.in_pathing_grid(addon_point)
+                    for addon_point in addon_points
+            ):
+                factory.build(UnitTypeId.FACTORYTECHLAB)
+
+
+async def liftFactory(self):
+    for factory in self.structures(UnitTypeId.FACTORY).idle:
+        if not factory.has_add_on:
+            factory(AbilityId.LIFT)
+            return
+
+
+async def landAndReadyToBuildFactoryAddOn(self):
+    for factory in self.structures(UnitTypeId.FACTORYFLYING).idle:
+        possible_land_positions_offset = sorted(
+            (Point2((x, y)) for x in range(-10, 10) for y in range(-10, 10)),
+            key=lambda point: point.x ** 2 + point.y ** 2,
+        )
+        offset_point: Point2 = Point2((-0.5, -0.5))
+        possible_land_positions = (factory.position.rounded + offset_point + p for p in possible_land_positions_offset)
+        for target_land_position in possible_land_positions:
+            land_and_addon_points: List[Point2] = land_positions(target_land_position)
+            if all(
+                    self.in_map_bounds(land_pos) and self.in_placement_grid(land_pos) and self.in_pathing_grid(land_pos)
+                    for land_pos in land_and_addon_points
+            ):
+                factory(AbilityId.LAND, target_land_position)
+                return
+
+
+
+async def buildGhostAcademy(self):
+    CCs: Units = self.townhalls()
+    # 指挥中心是否还在
+    worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
+    # 是否有空闲工人
+    for cc in CCs:
+        map_center = self.game_info.map_center
+        position_towards_map_center = cc.position.towards(map_center, distance=8)
+        placement_position = await self.find_placement(UnitTypeId.GHOSTACADEMY, near=position_towards_map_center)
+        # Placement_position can be None
+        # 是否有合适的位置
+        build_worker = worker_candidates.closest_to(placement_position)
+        build_worker.build(UnitTypeId.GHOSTACADEMY, placement_position)
+        return
+
+async def buildMissileturret(self):
+    CCs: Units = self.townhalls()
+    # 指挥中心是否还在
+    worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
+    # 是否有空闲工人
+    for cc in CCs:
+        map_center = self.game_info.map_center
+        position_towards_map_center = cc.position.towards(map_center, distance=10)
+        placement_position = await self.find_placement(UnitTypeId.MISSILETURRET, near=position_towards_map_center)
+        # Placement_position can be None
+        # 是否有合适的位置
+        build_worker = worker_candidates.closest_to(placement_position)
+        build_worker.build(UnitTypeId.MISSILETURRET, placement_position)
+        return
+
+async def buildSensortower(self):
+    CCs: Units = self.townhalls()
+    # 指挥中心是否还在
+    worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
+    # 是否有空闲工人
+    for cc in CCs:
+        map_center = self.game_info.map_center
+        position_towards_map_center = cc.position.towards(map_center, distance=10)
+        placement_position = await self.find_placement(UnitTypeId.SENSORTOWER, near=position_towards_map_center)
+        # Placement_position can be None
+        # 是否有合适的位置
+        build_worker = worker_candidates.closest_to(placement_position)
+        build_worker.build(UnitTypeId.SENSORTOWER, placement_position)
+        return
+
+async def buildBunker(self):
+    CCs: Units = self.townhalls()
+    # 指挥中心是否还在
+    worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
+    # 是否有空闲工人
+    for cc in CCs:
+        map_center = self.game_info.map_center
+        position_towards_map_center = cc.position.towards(map_center, distance=12)
+        placement_position = await self.find_placement(UnitTypeId.BUNKER, near=position_towards_map_center)
+        # Placement_position can be None
+        # 是否有合适的位置
+        build_worker = worker_candidates.closest_to(placement_position)
+        build_worker.build(UnitTypeId.BUNKER, placement_position)
+        return
+async def buildArmory(self):
+    CCs: Units = self.townhalls()
+    # 指挥中心是否还在
+    worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
+    # 是否有空闲工人
+    for cc in CCs:
+        map_center = self.game_info.map_center
+        position_towards_map_center = cc.position.towards(map_center, distance=9)
+        placement_position = await self.find_placement(UnitTypeId.ARMORY, near=position_towards_map_center)
+        # Placement_position can be None
+        # 是否有合适的位置
+        build_worker = worker_candidates.closest_to(placement_position)
+        build_worker.build(UnitTypeId.ARMORY, placement_position)
+        return
+async def buildFusioncore(self):
+    CCs: Units = self.townhalls()
+    # 指挥中心是否还在
+    worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
+    # 是否有空闲工人
+    for cc in CCs:
+        map_center = self.game_info.map_center
+        position_towards_map_center = cc.position.towards(map_center, distance=9)
+        placement_position = await self.find_placement(UnitTypeId.FUSIONCORE, near=position_towards_map_center)
+        # Placement_position can be None
+        # 是否有合适的位置
+        build_worker = worker_candidates.closest_to(placement_position)
+        build_worker.build(UnitTypeId.FUSIONCORE, placement_position)
+        return
+
+async def buildStarport(self):
+    CCs: Units = self.townhalls()
+    # 指挥中心是否还在
+    worker_candidates = self.workers.filter(lambda worker: (worker.is_collecting or worker.is_idle) and worker.tag not in self.unit_tags_received_action)
+    # 是否有空闲工人
+    for cc in CCs:
+        map_center = self.game_info.map_center
+        position_towards_map_center = cc.position.towards(map_center, distance=8)
+        placement_position = await self.find_placement(UnitTypeId.STARPORT, near=position_towards_map_center)
+        # Placement_position can be None
+        # 是否有合适的位置
+        build_worker = worker_candidates.closest_to(placement_position)
+        build_worker.build(UnitTypeId.STARPORT, placement_position)
+        return
+
+async def buildStarportReactor(self):
+    for starport in self.structures(UnitTypeId.STARPORT).ready:
+        if not starport.has_add_on:
+            addon_points = points_to_build_addon(starport.position)
+            if all(
+                    self.in_map_bounds(addon_point)
+                    and self.in_placement_grid(addon_point)
+                    and self.in_pathing_grid(addon_point)
+                    for addon_point in addon_points
+            ):
+                starport.build(UnitTypeId.STARPORTREACTOR)
+
+
+async def buildStarportTechlab(self):
+    for starport in self.structures(UnitTypeId.STARPORT).ready:
+        if not starport.has_add_on:
+            addon_points = points_to_build_addon(starport.position)
+            if all(
+                    self.in_map_bounds(addon_point)
+                    and self.in_placement_grid(addon_point)
+                    and self.in_pathing_grid(addon_point)
+                    for addon_point in addon_points
+            ):
+                starport.build(UnitTypeId.STARPORTTECHLAB)
+
+
+async def liftStarport(self):
+    for starport in self.structures(UnitTypeId.STARPORT).idle:
+        if not starport.has_add_on:
+            starport(AbilityId.LIFT)
+            return
+
+
+async def landAndReadyToBuildStarportAddOn(self):
+    for starport in self.structures(UnitTypeId.STARPORTFLYING).idle:
+        possible_land_positions_offset = sorted(
+            (Point2((x, y)) for x in range(-10, 10) for y in range(-10, 10)),
+            key=lambda point: point.x ** 2 + point.y ** 2,
+        )
+        offset_point: Point2 = Point2((-0.5, -0.5))
+        possible_land_positions = (starport.position.rounded + offset_point + p for p in possible_land_positions_offset)
+        for target_land_position in possible_land_positions:
+            land_and_addon_points: List[Point2] = land_positions(target_land_position)
+            if all(
+                    self.in_map_bounds(land_pos) and self.in_placement_grid(land_pos) and self.in_pathing_grid(land_pos)
+                    for land_pos in land_and_addon_points
+            ):
+                starport(AbilityId.LAND, target_land_position)
+                return
+
 
 
 async def expand(self):
@@ -226,25 +478,6 @@ async def trainBattlecruiser(self):
     for barracks in self.structures(UnitTypeId.BARRACKS).ready:
         barracks.train(UnitTypeId.BATTLECRUISER)
         return
-
-
-def select_target(self) -> Point2:
-    # Pick a random enemy structure's position
-    targets = self.enemy_structures
-    if targets:
-        return targets.random.position
-
-    # Pick a random enemy unit's position
-    targets = self.enemy_units
-    if targets:
-        return targets.random.position
-
-    # Pick enemy start location if it has no friendly units nearby
-    if min([unit.distance_to(self.enemy_start_locations[0]) for unit in self.units]) > 5:
-        return self.enemy_start_locations[0]
-
-    # Pick a random mineral field on the map
-    return self.mineral_field.random.position
 
 
 # 回去采矿
