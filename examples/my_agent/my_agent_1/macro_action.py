@@ -421,8 +421,8 @@ async def trainMarine(self):
 
 
 async def trainMarauder(self):
-    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
-        barracks.train(UnitTypeId.Marauder)
+    for barracks in self.structures(UnitTypeId.BARRACKS).ready.filter(lambda unit: unit.has_techlab == True):
+        barracks.train(UnitTypeId.MARAUDER)
         return
 
 
@@ -433,37 +433,37 @@ async def trainHellion(self):
 
 
 async def trainGhost(self):
-    for barracks in self.structures(UnitTypeId.BARRACKS).ready:
+    for barracks in self.structures(UnitTypeId.BARRACKS).ready.filter(lambda unit: unit.has_techlab == True):
         barracks.train(UnitTypeId.GHOST)
         return
 
 
 async def trainViking(self):
-    for starport in self.structures(UnitTypeId.STARPORT).ready:
-        starport.train(UnitTypeId.VIKING)
+    for starport in self.structures(UnitTypeId.STARPORT).ready.filter(lambda unit: unit.has_techlab == True):
+        starport.train(UnitTypeId.VIKINGFIGHTER)
         return
 
 
 async def trainThor(self):
-    for factory in self.structures(UnitTypeId.FACTORY).ready:
+    for factory in self.structures(UnitTypeId.FACTORY).ready.filter(lambda unit: unit.has_techlab == True):
         factory.train(UnitTypeId.THOR)
         return
 
 
 async def trainRaven(self):
-    for starport in self.structures(UnitTypeId.STARPORT).ready:
+    for starport in self.structures(UnitTypeId.STARPORT).ready.filter(lambda unit: unit.has_techlab == True):
         starport.train(UnitTypeId.RAVEN)
         return
 
 
 async def trainMedivac(self):
-    for starport in self.structures(UnitTypeId.STARPORT).ready:
+    for starport in self.structures(UnitTypeId.STARPORT).ready.filter(lambda unit: unit.has_techlab == True):
         starport.train(UnitTypeId.MEDIVAC)
         return
 
 
 async def trainBanshee(self):
-    for starport in self.structures(UnitTypeId.STARPORT).ready:
+    for starport in self.structures(UnitTypeId.STARPORT).ready.filter(lambda unit: unit.has_techlab == True):
         starport.train(UnitTypeId.BANSHEE)
         return
 
@@ -475,46 +475,52 @@ async def trainWidowmine(self):
 
 
 async def trainLiberator(self):
-    for starport in self.structures(UnitTypeId.STARPORT).ready:
+    for starport in self.structures(UnitTypeId.STARPORT).ready.filter(lambda unit: unit.has_techlab == True):
         starport.train(UnitTypeId.LIBERATOR)
         return
 
 
 async def trainCyclone(self):
-    for factory in self.structures(UnitTypeId.FACTORY).ready:
-        factory.train(UnitTypeId.CYCLON)
+    for factory in self.structures(UnitTypeId.FACTORY).ready.filter(lambda unit: unit.has_techlab == True):
+        factory.train(UnitTypeId.CYCLONE)
+        return
+async def trainSiegetank(self):
+    for factory in self.structures(UnitTypeId.SIEGETANK).ready.filter(lambda unit: unit.has_techlab == True):
+        factory.train(UnitTypeId.SIEGETANK)
         return
 
 
 async def trainBattlecruiser(self):
-    for starport in self.structures(UnitTypeId.STARPORT).ready:
+    for starport in self.structures(UnitTypeId.STARPORT).ready.filter(lambda unit: unit.has_techlab == True):
         starport.train(UnitTypeId.BATTLECRUISER)
         return
 
 
 # 回去采矿
-async def scvBackToMineral(self):
-    for scv in self.workers.idle:
-        cc: Units = self.townhalls().closest_to(scv)
-        mineral_field_close = self.mineral_field.closest_to(cc)
-        if mineral_field_close.assigned_harvesters < mineral_field_close.ideal_harvesters:
-            # worker: Units = self.workers.closer_than(10, refinery)
-            scv.gather(mineral_field_close)
-            return
-
-            # scv.gather(self.mineral_field.closest_to(cc))
-
-
-# 回去采瓦斯
-async def scvBackToRefinery(self):
-    for refinery in self.gas_buildings:
-        if refinery.assigned_harvesters < refinery.ideal_harvesters:
-            worker: Units = self.workers.closer_than(10, refinery)
-            if worker:
-                worker.random.gather(refinery)
-                return
-            # 枪兵攻击敌人
-
+# async def scvBackToMineral(self):
+#     for scv in self.workers.idle:
+#         CCs: Units = self.townhalls()
+#         for cc in CCs:
+#             mineral_fields_close = self.mineral_field.filter(lambda unit: unit.distance_to(cc.position) < 10)
+#             if mineral_fields_close and cc.assigned_harvesters < cc.ideal_harvesters:
+#                 scv.gather(mineral_fields_close.first)
+#                 return
+#                 # return 1
+#
+#         # scv.gather(self.mineral_field.closest_to(cc))
+#
+#
+# # 回去采瓦斯
+# async def scvBackToRefinery(self):
+#     for refinery in self.gas_buildings:
+#         if refinery.assigned_harvesters < refinery.ideal_harvesters:
+#             worker: Units = self.workers.closer_than(10, refinery)
+#             if worker:
+#                 worker.random.gather(refinery)
+#                 return
+#             # 枪兵攻击敌人
+async def scvBackToWork(self):
+    await self.distribute_workers()
 
 # 攻击任意一个矿点
 async def detectionAndAttack(self):

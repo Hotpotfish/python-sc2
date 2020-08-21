@@ -482,7 +482,7 @@ async def trainScv_mask(self):
     if self.can_afford(UnitTypeId.SCV):
         if self.supply_left >= 1:
             CCs: Units = self.townhalls()
-            if CCs and len(self.units(UnitTypeId.SCV)) < 22 * len(CCs):
+            if CCs and len(self.units(UnitTypeId.SCV)) <= (22 * len(CCs)):
                 for cc in CCs:
                     if cc.is_idle:
                         # cc.train(UnitTypeId.SCV)
@@ -538,56 +538,112 @@ async def trainViking_mask(self):
         starport_ready = self.structures(UnitTypeId.STARPORT).ready
         starport_techlab_ready = starport_ready.filter(lambda unit: unit.has_techlab == True)
         if starport_techlab_ready:
-            if self.can_afford(UnitTypeId.VIKING):
+            if self.can_afford(UnitTypeId.VIKINGFIGHTER):
                 if self.supply_left >= 2:
                     return 1
     return 0
 
 
-def select_target(self) -> Point2:
-    # Pick a random enemy structure's position
-    targets = self.enemy_structures
-    if targets:
-        return targets.random.position
-
-    # Pick a random enemy unit's position
-    targets = self.enemy_units
-    if targets:
-        return targets.random.position
-
-    # Pick enemy start location if it has no friendly units nearby
-    if min([unit.distance_to(self.enemy_start_locations[0]) for unit in self.units]) > 5:
-        return self.enemy_start_locations[0]
-
-    # Pick a random mineral field on the map
-    return self.mineral_field.random.position
-
-
-# 回去采矿（至少一个生效）
-async def scvBackToMineral_mask(self):
-    if self.workers.idle:
-        for scv in self.workers.idle:
-            if self.townhalls():
-                cc: Units = self.townhalls().closest_to(scv)
-                if cc:
-                    mineral_field_close = self.mineral_field.closest_to(cc)
-                    if mineral_field_close:
-                        if mineral_field_close.assigned_harvesters < mineral_field_close.ideal_harvesters:
-                            # worker: Units = self.workers.closer_than(10, refinery)
-                            return 1
+async def trainThor_mask(self):
+    if self.structures(UnitTypeId.FACTORY) and self.structures(UnitTypeId.ARMORY):
+        factory_ready = self.structures(UnitTypeId.FACTORY).ready
+        factory_techlab_ready = factory_ready.filter(lambda unit: unit.has_techlab == True)
+        if factory_techlab_ready:
+            if self.can_afford(UnitTypeId.THOR):
+                if self.supply_left >= 2:
+                    return 1
     return 0
 
-    # scv.gather(self.mineral_field.closest_to(cc))
 
-
-# 回去采瓦斯（至少一个生效）
-async def scvBackToRefinery_mask(self):
-    if self.gas_buildings:
-        for refinery in self.gas_buildings:
-            if refinery.assigned_harvesters < refinery.ideal_harvesters:
-                worker: Units = self.workers.closer_than(10, refinery)
-                if worker:
+async def trainRaven_mask(self):
+    if self.structures(UnitTypeId.STARPORT):
+        starport_ready = self.structures(UnitTypeId.STARPORT).ready
+        starport_techlab_ready = starport_ready.filter(lambda unit: unit.has_techlab == True)
+        if starport_techlab_ready:
+            if self.can_afford(UnitTypeId.RAVEN):
+                if self.supply_left >= 2:
                     return 1
+    return 0
+
+
+async def trainMedivac_mask(self):
+    if self.structures(UnitTypeId.STARPORT):
+        starport_ready = self.structures(UnitTypeId.STARPORT).ready
+        starport_techlab_ready = starport_ready.filter(lambda unit: unit.has_techlab == True)
+        if starport_techlab_ready:
+            if self.can_afford(UnitTypeId.MEDIVAC):
+                if self.supply_left >= 2:
+                    return 1
+    return 0
+
+
+async def trainWidowmine_mask(self):
+    if self.structures(UnitTypeId.FACTORY):
+        if self.structures(UnitTypeId.FACTORY).ready:
+            if self.can_afford(UnitTypeId.WIDOWMINE):
+                if self.supply_left >= 2:
+                    return 1
+    return 0
+
+
+async def trainBanshee_mask(self):
+    if self.structures(UnitTypeId.STARPORT):
+        starport_ready = self.structures(UnitTypeId.STARPORT).ready
+        starport_techlab_ready = starport_ready.filter(lambda unit: unit.has_techlab == True)
+        if starport_techlab_ready:
+            if self.can_afford(UnitTypeId.BANSHEE):
+                if self.supply_left >= 3:
+                    return 1
+    return 0
+
+
+async def trainLiberator_mask(self):
+    if self.structures(UnitTypeId.STARPORT):
+        starport_ready = self.structures(UnitTypeId.LIBERATOR).ready
+        starport_techlab_ready = starport_ready.filter(lambda unit: unit.has_techlab == True)
+        if starport_techlab_ready:
+            if self.can_afford(UnitTypeId.LIBERATOR):
+                if self.supply_left >= 3:
+                    return 1
+    return 0
+
+
+async def trainCyclone_mask(self):
+    if self.structures(UnitTypeId.FACTORY):
+        factory_ready = self.structures(UnitTypeId.FACTORY).ready
+        factory_techlab_ready = factory_ready.filter(lambda unit: unit.has_techlab == True)
+        if factory_techlab_ready:
+            if self.can_afford(UnitTypeId.CYCLONE):
+                if self.supply_left >= 3:
+                    return 1
+    return 0
+
+
+async def trainSiegetank_mask(self):
+    if self.structures(UnitTypeId.FACTORY):
+        factory_ready = self.structures(UnitTypeId.FACTORY).ready
+        factory_techlab_ready = factory_ready.filter(lambda unit: unit.has_techlab == True)
+        if factory_techlab_ready:
+            if self.can_afford(UnitTypeId.SIEGETANK):
+                if self.supply_left >= 3:
+                    return 1
+    return 0
+
+
+async def trainBattlecruiser_mask(self):
+    if self.structures(UnitTypeId.STARPORT) and self.structures(UnitTypeId.FUSIONCORE):
+        starport_ready = self.structures(UnitTypeId.STARPORT).ready
+        starport_techlab_ready = starport_ready.filter(lambda unit: unit.has_techlab == True)
+        if starport_techlab_ready:
+            if self.can_afford(UnitTypeId.BATTLECRUISER):
+                if self.supply_left >= 6:
+                    return 1
+    return 0
+
+
+async def scvBackToWork_mask(self):
+    if self.workers.idle:
+        return 1
     return 0
 
 
@@ -628,7 +684,6 @@ async def defence_mask(self):
     if self.supply_army > 0:
         if self.structures:
             if self.enemy_units:
-                # close_enemy = self.enemy_units.closest_to(self.structures)
                 enemy_units = next((unit for unit in self.enemy_units), None)
                 if self.structures.closest_distance_to(enemy_units) < 10:
                     return 1
@@ -658,10 +713,8 @@ async def getMask(self):
     for i in range(a_length):
         if economic_action[i] == doNothing:
             mask.append(1)
-
         if economic_action[i] == buildSupplydepot:
             mask.append(await buildSupplydepot_mask(self))
-
         if economic_action[i] == buildBarracksReactor:
             mask.append(await buildBarracksReactor_mask(self))
         if economic_action[i] == buildBarracksTechlab:
@@ -672,12 +725,10 @@ async def getMask(self):
             mask.append(await liftBarracks_mask(self))
         if economic_action[i] == landAndReadyToBuildBarracksAddOn:
             mask.append(await landAndReadyToBuildBarracksAddOn_mask(self))
-
         if economic_action[i] == buildEngineeringbay:
             mask.append(await buildEngineeringbay_mask(self))
         if economic_action[i] == buildRefinery:
             mask.append(await buildRefinery_mask(self))
-
         if economic_action[i] == buildFactoryReactor:
             mask.append(await buildFactoryReactor_mask(self))
         if economic_action[i] == buildFactoryTechlab:
@@ -688,7 +739,6 @@ async def getMask(self):
             mask.append(await liftFactory_mask(self))
         if economic_action[i] == landAndReadyToBuildFactoryAddOn:
             mask.append(await landAndReadyToBuildFactoryAddOn_mask(self))
-
         if economic_action[i] == buildGhostAcademy:
             mask.append(await buildGhostAcademy_mask(self))
         if economic_action[i] == buildMissileturret:
@@ -701,7 +751,6 @@ async def getMask(self):
             mask.append(await buildArmory_mask(self))
         if economic_action[i] == buildFusioncore:
             mask.append(await buildFusioncore_mask(self))
-
         if economic_action[i] == buildStarport:
             mask.append(await buildStarport_mask(self))
         if economic_action[i] == buildStarportReactor:
@@ -712,19 +761,42 @@ async def getMask(self):
             mask.append(await liftStarport_mask(self))
         if economic_action[i] == landAndReadyToBuildStarportAddOn:
             mask.append(await landAndReadyToBuildStarportAddOn_mask(self))
-
         if economic_action[i] == expand:
             mask.append(await expand_mask(self))
+
         if economic_action[i] == trainScv:
             mask.append(await trainScv_mask(self))
         if economic_action[i] == trainMarine:
             mask.append(await trainMarine_mask(self))
         if economic_action[i] == trainHellion:
             mask.append(await trainHellion_mask(self))
-        if economic_action[i] == scvBackToMineral:
-            mask.append(await scvBackToMineral_mask(self))
-        if economic_action[i] == scvBackToRefinery:
-            mask.append(await scvBackToRefinery_mask(self))
+        if economic_action[i] == trainMarauder:
+            mask.append(await trainMarauder_mask(self))
+        if economic_action[i] == trainGhost:
+            mask.append(await trainGhost_mask(self))
+        if economic_action[i] == trainViking:
+            mask.append(await trainViking_mask(self))
+        if economic_action[i] == trainBanshee:
+            mask.append(await trainBanshee_mask(self))
+        if economic_action[i] == trainThor:
+            mask.append(await trainThor_mask(self))
+        if economic_action[i] == trainRaven:
+            mask.append(await trainRaven_mask(self))
+        if economic_action[i] == trainMedivac:
+            mask.append(await trainMedivac_mask(self))
+        if economic_action[i] == trainWidowmine:
+            mask.append(await trainWidowmine_mask(self))
+        if economic_action[i] == trainCyclone:
+            mask.append(await trainCyclone_mask(self))
+        if economic_action[i] == trainSiegetank:
+            mask.append(await trainSiegetank_mask(self))
+        if economic_action[i] == trainBattlecruiser:
+            mask.append(await trainBattlecruiser_mask(self))
+        if economic_action[i] == trainLiberator:
+            mask.append(await trainLiberator_mask(self))
+
+        if economic_action[i] == scvBackToWork:
+            mask.append(await scvBackToWork_mask(self))
         if economic_action[i] == detectionAndAttack:
             mask.append(await detectionAndAttack_mask(self))
         if economic_action[i] == massNearEnemyBase:
