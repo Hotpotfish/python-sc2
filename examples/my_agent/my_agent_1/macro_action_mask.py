@@ -6,11 +6,11 @@ from sc2.position import Point2
 from sc2.units import Units
 from sc2.unit import Unit
 
-TRAIN_NUMBER = 2
 ATTACK_FREQUENCY = 32
 BUILD_FREQUENCY = 32
 DETECTION_FREQUENCY = 256
 DISTRIBUTE_FREQUENCY = 32
+
 
 # 动作若无法执行直接输出no-op
 
@@ -41,7 +41,7 @@ async def buildSupplydepot_mask(self):
 async def buildBarracks_mask(self):
     if self.state.game_loop % BUILD_FREQUENCY:
         # 是否能承担
-        if self.can_afford(UnitTypeId.BARRACKS) and (len(self.structures(UnitTypeId.BARRACKS)) + len(self.structures(UnitTypeId.BARRACKS)) <= 3):
+        if self.can_afford(UnitTypeId.BARRACKS) and (len(self.structures(UnitTypeId.BARRACKS)) + len(self.structures(UnitTypeId.BARRACKS)) <= 3 * len(self.townhalls())):
             # 科技树依赖
             if self.structures(UnitTypeId.SUPPLYDEPOT) or self.structures(UnitTypeId.SUPPLYDEPOTLOWERED):
                 CCs: Units = self.townhalls()
