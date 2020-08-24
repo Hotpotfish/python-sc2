@@ -17,7 +17,7 @@ from sc2 import Race, Difficulty
 from sc2.player import Bot, Computer, Human
 
 EPSIODES = 2000
-BATCH_SIZE = 1024
+BATCH_SIZE = 512
 GAMMA = 0.99
 
 
@@ -81,21 +81,24 @@ class RL_Bot(sc2.BotAI):
 
 def main():
     rlBot = RL_Bot()
+    rlBot.research_combatshield = 0
+    rlBot.eConcussiveshells =0
     n_epsiodes = EPSIODES
     while n_epsiodes != 0:
         r = sc2.run_game(
 
             sc2.maps.get("Flat128"),
-            [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.Easy)],
+            [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.MediumHard)],
             realtime=False,
             # disable_fog=True
         )
-        # r = sc2.run_game(
-        #     sc2.maps.get("AutomatonLE"),
-        #     [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, rlBot, name="RL_bot")],
-        #     realtime=True
-        # )
-        # sc2.Result
+    # r = sc2.run_game(
+    #     sc2.maps.get("Flat128"),
+    #     [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, rlBot, name="RL_bot")],
+    #     realtime=True,
+    # disable_fog = True
+    # )
+    # sc2.Result
         reward = get_reward(r)
 
         rlBot.memory.inQueue([rlBot.current_state, np.eye(rlBot.action_dim)[rlBot.action], reward, rlBot.next_state, 1])
@@ -103,6 +106,8 @@ def main():
         rlBot.action = None
         # rlBot.current_state
         rlBot.next_state = None
+        rlBot.research_combatshield = 0
+        rlBot.eConcussiveshells = 0
 
         n_epsiodes -= 1
 

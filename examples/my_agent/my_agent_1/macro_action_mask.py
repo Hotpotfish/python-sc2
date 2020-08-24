@@ -8,7 +8,7 @@ from sc2.unit import Unit
 
 ATTACK_FREQUENCY = 32
 BUILD_FREQUENCY = 32
-DETECTION_FREQUENCY = 256
+DETECTION_FREQUENCY = 64
 DISTRIBUTE_FREQUENCY = 32
 
 
@@ -28,7 +28,7 @@ async def buildSupplydepot_mask(self):
                     if worker_candidates:
                         for cc in CCs:
                             map_center = self.game_info.map_center
-                            position_towards_map_center = cc.position.towards(map_center, distance=8)
+                            position_towards_map_center = cc.position.towards(map_center, distance=-8)
                             placement_position = await self.find_placement(UnitTypeId.SUPPLYDEPOT, near=position_towards_map_center)
                             # Placement_position can be None
                             # 是否有合适的位置
@@ -41,7 +41,7 @@ async def buildSupplydepot_mask(self):
 async def buildBarracks_mask(self):
     if self.state.game_loop % BUILD_FREQUENCY:
         # 是否能承担
-        if self.can_afford(UnitTypeId.BARRACKS) and (len(self.structures(UnitTypeId.BARRACKS)) + len(self.structures(UnitTypeId.BARRACKS)) <= 3 * len(self.townhalls())):
+        if self.can_afford(UnitTypeId.BARRACKS) and (len(self.structures(UnitTypeId.BARRACKS)) + len(self.structures(UnitTypeId.BARRACKS)) <= 4 * len(self.townhalls())):
             # 科技树依赖
             if self.structures(UnitTypeId.SUPPLYDEPOT) or self.structures(UnitTypeId.SUPPLYDEPOTLOWERED):
                 CCs: Units = self.townhalls()
@@ -167,7 +167,7 @@ async def buildRefinery_mask(self):
 async def buildFactory_mask(self):
     if self.state.game_loop % BUILD_FREQUENCY:
         # 是否能承担
-        if self.can_afford(UnitTypeId.FACTORY) and (len(self.structures(UnitTypeId.FACTORY)) + len(self.structures(UnitTypeId.FACTORY)) <= 2):
+        if self.can_afford(UnitTypeId.FACTORY) and (len(self.structures(UnitTypeId.FACTORY)) + len(self.structures(UnitTypeId.FACTORY)) <= 1):
             # 科技树依赖
             if self.structures(UnitTypeId.SUPPLYDEPOT) or self.structures(UnitTypeId.BARRACKS):
                 CCs: Units = self.townhalls()
@@ -481,7 +481,7 @@ async def expand_mask(self):
 
 async def trainScv_mask(self):
     if self.can_afford(UnitTypeId.SCV):
-        if self.supply_left >= 1:
+        if self.supply_left >= 1 and len(self.units(UnitTypeId.SCV)) < 70:
             CCs: Units = self.townhalls()
             if CCs and len(self.units(UnitTypeId.SCV)) <= (22 * len(CCs)):
                 for cc in CCs:
@@ -642,6 +642,64 @@ async def trainBattlecruiser_mask(self):
     return 0
 
 
+async def upgradeCombatShield_mask(self):
+    if self.structures(UnitTypeId.BARRACKSTECHLAB).idle.ready:
+        for barrackstechlab in self.structures(UnitTypeId.BARRACKSTECHLAB).idle.ready:
+            if await self.can_cast(barrackstechlab, AbilityId.RESEARCH_COMBATSHIELD) and self.research_combatshield == 0:
+                return 1
+    return 0
+
+async def upgradeConcussiveshells_mask(self):
+    if self.structures(UnitTypeId.BARRACKSTECHLAB).idle.ready:
+        for barrackstechlab in self.structures(UnitTypeId.BARRACKSTECHLAB).idle.ready:
+            if await self.can_cast(barrackstechlab, AbilityId.RESEARCH_CONCUSSIVESHELLS) and self.eConcussiveshells == 0:
+                return 1
+    return 0
+
+async def upgradeInfantryWeaponsLevel1_mask(self):
+    if self.can_afford(AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYWEAPONSLEVEL1) and self.already_pending_upgrade(UpgradeId.TERRANINFANTRYWEAPONSLEVEL1) == 0:
+        if self.structures(UnitTypeId.ENGINEERINGBAY).idle.ready:
+            return 1
+    return 0
+
+
+async def upgradeInfantryArmorLevel1_mask(self):
+    if self.can_afford(AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYARMORLEVEL1) and self.already_pending_upgrade(UpgradeId.TERRANINFANTRYARMORSLEVEL1) == 0:
+        if self.structures(UnitTypeId.ENGINEERINGBAY).idle.ready:
+            return 1
+    return 0
+
+
+async def upgradeInfantryWeaponsLevel2_mask(self):
+    if self.can_afford(AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYWEAPONSLEVEL2) and self.already_pending_upgrade(UpgradeId.TERRANINFANTRYWEAPONSLEVEL2) == 0 and self.structures(
+            UnitTypeId.ARMORY):
+        if self.structures(UnitTypeId.ENGINEERINGBAY).idle.ready:
+            return 1
+    return 0
+
+
+async def upgradeInfantryArmorLevel2_mask(self):
+    if self.can_afford(AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYARMORLEVEL2) and self.already_pending_upgrade(UpgradeId.TERRANINFANTRYARMORSLEVEL2) == 0 and self.structures(UnitTypeId.ARMORY):
+        if self.structures(UnitTypeId.ENGINEERINGBAY).idle.ready:
+            return 1
+    return 0
+
+
+async def upgradeInfantryWeaponsLevel3_mask(self):
+    if self.can_afford(AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYWEAPONSLEVEL3) and self.already_pending_upgrade(UpgradeId.TERRANINFANTRYWEAPONSLEVEL3) == 0 and self.structures(
+            UnitTypeId.ARMORY):
+        if self.structures(UnitTypeId.ENGINEERINGBAY).idle.ready:
+            return 1
+    return 0
+
+
+async def upgradeInfantryArmorLevel3_mask(self):
+    if self.can_afford(AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYARMORLEVEL3) and self.already_pending_upgrade(UpgradeId.TERRANINFANTRYARMORSLEVEL3) == 0 and self.structures(UnitTypeId.ARMORY):
+        if self.structures(UnitTypeId.ENGINEERINGBAY).idle.ready:
+            return 1
+    return 0
+
+
 async def scvBackToWork_mask(self):
     if self.state.game_loop % DISTRIBUTE_FREQUENCY == 0:
         if self.workers.idle:
@@ -662,7 +720,7 @@ async def detectionAndAttack_mask(self):
 async def massNearEnemyBase_mask(self):
     if self.state.game_loop % ATTACK_FREQUENCY == 0:
         if self.enemy_structures:
-            if self.supply_army > 10:
+            if self.supply_army > 30:
                 return 1
     return 0
 
@@ -670,7 +728,7 @@ async def massNearEnemyBase_mask(self):
 async def massNearBase_mask(self):
     if self.state.game_loop % ATTACK_FREQUENCY == 0:
         if self.townhalls():
-            if self.supply_army > 10:
+            if self.supply_army > 30:
                 return 1
     return 0
 
@@ -694,7 +752,7 @@ async def defence_mask(self):
 
 async def attackEnemySquad_mask(self):
     if self.state.game_loop % ATTACK_FREQUENCY == 0:
-        if self.supply_army > 20:
+        if self.supply_army > 30:
             if self.enemy_units:
                 return 1
     return 0
@@ -704,7 +762,7 @@ async def attackNearestBase_mask(self):
     if self.state.game_loop % ATTACK_FREQUENCY == 0:
         if self.enemy_structures:
             if self.structures:
-                if self.supply_army > 10:
+                if self.supply_army > 30:
                     return 1
     return 0
 
@@ -797,8 +855,27 @@ async def getMask(self):
         if economic_action[i] == trainLiberator:
             mask.append(await trainLiberator_mask(self))
 
+        if economic_action[i] == upgradeCombatShield:
+            mask.append(await upgradeCombatShield_mask(self))
+        if economic_action[i] == upgradeConcussiveshells:
+            mask.append(await upgradeConcussiveshells_mask(self))
+
+        if economic_action[i] == upgradeInfantryWeaponsLevel1:
+            mask.append(await upgradeInfantryWeaponsLevel1_mask(self))
+        if economic_action[i] == upgradeInfantryArmorLevel1:
+            mask.append(await upgradeInfantryArmorLevel1_mask(self))
+        if economic_action[i] == upgradeInfantryWeaponsLevel2:
+            mask.append(await upgradeInfantryWeaponsLevel2_mask(self))
+        if economic_action[i] == upgradeInfantryArmorLevel2:
+            mask.append(await upgradeInfantryArmorLevel2_mask(self))
+        if economic_action[i] == upgradeInfantryWeaponsLevel3:
+            mask.append(await upgradeInfantryWeaponsLevel3_mask(self))
+        if economic_action[i] == upgradeInfantryArmorLevel3:
+            mask.append(await upgradeInfantryArmorLevel3_mask(self))
+
         if economic_action[i] == scvBackToWork:
             mask.append(await scvBackToWork_mask(self))
+
         if economic_action[i] == detectionAndAttack:
             mask.append(await detectionAndAttack_mask(self))
         if economic_action[i] == massNearEnemyBase:

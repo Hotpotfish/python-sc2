@@ -8,7 +8,7 @@ economic_action = [
     buildBarracksTechlab,
     liftBarracks,
     landAndReadyToBuildBarracksAddOn,
-    # buildEngineeringbay,
+    buildEngineeringbay,
     buildRefinery,
     # buildFactory,
     # buildFactoryReactor,
@@ -26,6 +26,16 @@ economic_action = [
     # buildStarportTechlab,
     # liftStarport,
     # landAndReadyToBuildStarportAddOn,
+
+    upgradeInfantryWeaponsLevel1,
+    upgradeInfantryArmorLevel1,
+    # upgradeInfantryWeaponsLevel2,
+    # upgradeInfantryArmorLevel2,
+    # upgradeInfantryWeaponsLevel3,
+    # upgradeInfantryArmorLevel3,
+
+    upgradeCombatShield,
+    upgradeConcussiveshells,
     expand,
 
     trainScv,

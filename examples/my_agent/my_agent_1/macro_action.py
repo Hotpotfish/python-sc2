@@ -2,6 +2,7 @@ import random
 
 from sc2 import AbilityId
 from sc2.ids.unit_typeid import UnitTypeId
+from sc2.ids.upgrade_id import UpgradeId
 from sc2.position import Point2
 from sc2.units import Units
 from sc2.unit import Unit
@@ -60,7 +61,7 @@ async def buildSupplydepot(self):
     # 是否有空闲工人
     for cc in CCs:
         map_center = self.game_info.map_center
-        position_towards_map_center = cc.position.towards(map_center, distance=8)
+        position_towards_map_center = cc.position.towards(map_center, distance=-8)
         placement_position = await self.find_placement(UnitTypeId.SUPPLYDEPOT, near=position_towards_map_center)
         # Placement_position can be None
         # 是否有合适的位置
@@ -484,6 +485,8 @@ async def trainCyclone(self):
     for factory in self.structures(UnitTypeId.FACTORY).ready.filter(lambda unit: unit.has_techlab == True):
         factory.train(UnitTypeId.CYCLONE)
         return
+
+
 async def trainSiegetank(self):
     for factory in self.structures(UnitTypeId.SIEGETANK).ready.filter(lambda unit: unit.has_techlab == True):
         factory.train(UnitTypeId.SIEGETANK)
@@ -496,31 +499,58 @@ async def trainBattlecruiser(self):
         return
 
 
-# 回去采矿
-# async def scvBackToMineral(self):
-#     for scv in self.workers.idle:
-#         CCs: Units = self.townhalls()
-#         for cc in CCs:
-#             mineral_fields_close = self.mineral_field.filter(lambda unit: unit.distance_to(cc.position) < 10)
-#             if mineral_fields_close and cc.assigned_harvesters < cc.ideal_harvesters:
-#                 scv.gather(mineral_fields_close.first)
-#                 return
-#                 # return 1
-#
-#         # scv.gather(self.mineral_field.closest_to(cc))
-#
-#
-# # 回去采瓦斯
-# async def scvBackToRefinery(self):
-#     for refinery in self.gas_buildings:
-#         if refinery.assigned_harvesters < refinery.ideal_harvesters:
-#             worker: Units = self.workers.closer_than(10, refinery)
-#             if worker:
-#                 worker.random.gather(refinery)
-#                 return
-#             # 枪兵攻击敌人
+async def upgradeCombatShield(self):
+    for barrackstechlab in self.structures(UnitTypeId.BARRACKSTECHLAB).idle.ready:
+        barrackstechlab(AbilityId.RESEARCH_COMBATSHIELD)
+        self.research_combatshield = 1
+        return
+
+
+async def upgradeConcussiveshells(self):
+    for barrackstechlab in self.structures(UnitTypeId.BARRACKSTECHLAB).idle.ready:
+        barrackstechlab(AbilityId.RESEARCH_CONCUSSIVESHELLS)
+        return
+
+
+async def upgradeInfantryWeaponsLevel1(self):
+    for engineeringbay in self.structures(UnitTypeId.ENGINEERINGBAY).idle.ready:
+        engineeringbay(AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYWEAPONSLEVEL1)
+        return
+
+
+async def upgradeInfantryArmorLevel1(self):
+    for engineeringbay in self.structures(UnitTypeId.ENGINEERINGBAY).idle.ready:
+        engineeringbay(AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYARMORLEVEL1)
+        return
+
+
+async def upgradeInfantryWeaponsLevel2(self):
+    for engineeringbay in self.structures(UnitTypeId.ENGINEERINGBAY).idle.ready:
+        engineeringbay(AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYWEAPONSLEVEL2)
+        return
+
+
+async def upgradeInfantryArmorLevel2(self):
+    for engineeringbay in self.structures(UnitTypeId.ENGINEERINGBAY).idle.ready:
+        engineeringbay(AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYARMORLEVEL2)
+        return
+
+
+async def upgradeInfantryWeaponsLevel3(self):
+    for engineeringbay in self.structures(UnitTypeId.ENGINEERINGBAY).idle.ready:
+        engineeringbay(AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYWEAPONSLEVEL3)
+        return
+
+
+async def upgradeInfantryArmorLevel3(self):
+    for engineeringbay in self.structures(UnitTypeId.ENGINEERINGBAY).idle.ready:
+        engineeringbay(AbilityId.ENGINEERINGBAYRESEARCH_TERRANINFANTRYARMORLEVEL3)
+        return
+
+
 async def scvBackToWork(self):
     await self.distribute_workers()
+
 
 # 攻击任意一个矿点
 async def detectionAndAttack(self):
