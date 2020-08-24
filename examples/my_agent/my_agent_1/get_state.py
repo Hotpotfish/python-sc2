@@ -5,7 +5,7 @@ PL = 200
 
 def get_state(self):
     return np.array([
-            self.state.game_loop / 4000,
+            self.state.game_loop / 15000,
             self.minerals / 5000,
             self.vespene / 5000,
             self.supply_army / PL,
