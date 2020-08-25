@@ -1,11 +1,11 @@
 import sys, os
 import tensorflow as tf
-from examples.my_agent.my_agent_1.SqQueue import SqQueue
-from examples.my_agent.my_agent_1.action_list import economic_action
-from examples.my_agent.my_agent_1.get_reward import get_reward
-from examples.my_agent.my_agent_1.get_state import get_state
-from examples.my_agent.my_agent_1.macro_action_mask import getMask
-from examples.my_agent.my_agent_1.net import net
+from examples.my_agent.rush_agent.SqQueue import SqQueue
+from examples.my_agent.rush_agent.action_list import economic_action
+from examples.my_agent.rush_agent.get_reward import get_reward
+from examples.my_agent.rush_agent.get_state import get_state
+from examples.my_agent.rush_agent.macro_action_mask import getMask
+from examples.my_agent.rush_agent.net import net
 import numpy as np
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "../.."))
@@ -43,10 +43,10 @@ class RL_Bot(sc2.BotAI):
         self.fin_epsilon = 0.01
         self.current_epsilon = self.init_epsilon
 
-        self.net = net(0, 1, 1e-3, self.action_dim, 64, 'net')
+        self.net = net(0, 1, 1e-3, self.action_dim, 45, 'net')
 
         self.session = tf.Session()
-        self.writer = tf.summary.FileWriter("economicFirst/logs/" + map_name, self.session.graph)
+        self.writer = tf.summary.FileWriter("rush/logs/" + map_name, self.session.graph)
         self.step = 0
         self.saver = tf.train.Saver()
         self.session.run(tf.initialize_all_variables())
@@ -107,10 +107,10 @@ def main():
         while n_epsiodes >= 0:
             # 保存模型
             if n_epsiodes % SAVE_CYCLE == 0:
-                isExists = os.path.exists("economicFirst/model/" + map_name)
+                isExists = os.path.exists("rush/model/" + map_name)
                 if not isExists:
-                    os.makedirs("economicFirst/model/" + map_name)
-                rlBot.saver.save(rlBot.session, "economicFirst/model/" + map_name + "/save.ckpt")
+                    os.makedirs("rush/model/" + map_name)
+                rlBot.saver.save(rlBot.session, "rush/model/" + map_name + "/save.ckpt")
 
             r = sc2.run_game(
                 sc2.maps.get(map_name),
@@ -129,13 +129,13 @@ def main():
             if reward == 1:
                 rlBot.win += 1
             win_rate.append(rlBot.win / (EPSIODES - n_epsiodes))
-            isExists = os.path.exists("economicFirst/result/" + map_name)
+            isExists = os.path.exists("rush/result/" + map_name)
             if not isExists:
-                os.makedirs("economicFirst/result/" + map_name)
-            np.save("economicFirst/result/" + map_name + '/win_rate', win_rate)
+                os.makedirs("rush/result/" + map_name)
+            np.save("rush/result/" + map_name + '/win_rate', win_rate)
             print("epsiodes: %d  win_rate: %f" % (EPSIODES - n_epsiodes, rlBot.win / (EPSIODES - n_epsiodes)))
     else:
-        rlBot.saver.restore(rlBot.session, "economicFirst/model/" + map_name + "/save.ckpt")
+        rlBot.saver.restore(rlBot.session, "rush/model/" + map_name + "/save.ckpt")
         sc2.run_game(
             sc2.maps.get("Flat128"),
             [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, rlBot, name="RL_bot")],
