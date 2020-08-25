@@ -19,6 +19,8 @@ from sc2.player import Bot, Computer, Human
 EPSIODES = 2000
 BATCH_SIZE = 512
 GAMMA = 0.99
+SAVE_CYCLE = 10
+HARD_REPLACE = 2000
 
 
 class RL_Bot(sc2.BotAI):
@@ -31,6 +33,9 @@ class RL_Bot(sc2.BotAI):
         self.next_state = None
         # self.reward = 0
         # self.done = None
+        self.win = 0
+
+        self.test_tag = False
 
         self.action_dim = len(economic_action)
 
@@ -38,9 +43,16 @@ class RL_Bot(sc2.BotAI):
         self.fin_epsilon = 0.01
         self.current_epsilon = self.init_epsilon
 
-        self.net = net(0, 1, 1e-2, self.action_dim, 64, 'net')
+        self.net = net(0, 1, 1e-3, self.action_dim, 64, 'net')
+
         self.session = tf.Session()
+        self.writer = tf.summary.FileWriter('logs/', self.session.graph)
+        self.step = 0
+        self.saver = tf.train.Saver()
         self.session.run(tf.initialize_all_variables())
+
+        self.research_combatshield = 0
+        self.eConcussiveshells = 0
 
     async def on_step(self, iteration):
         # print(iteration)
@@ -50,9 +62,12 @@ class RL_Bot(sc2.BotAI):
         mask = await getMask(self)
 
         q = q * mask
+        if not self.test_tag:
 
-        if random.random() <= self.current_epsilon:
-            self.action = np.random.choice(np.nonzero(np.array(mask))[0])
+            if random.random() <= self.current_epsilon:
+                self.action = np.random.choice(np.nonzero(np.array(mask))[0])
+            else:
+                self.action = np.argmax(q)
         else:
             self.action = np.argmax(q)
         self.current_epsilon -= (self.init_epsilon - self.fin_epsilon) / (EPSIODES * 2000)
@@ -62,7 +77,7 @@ class RL_Bot(sc2.BotAI):
         await economic_action[self.action](self)
         self.next_state = self.current_state
 
-        if self.memory.real_size > BATCH_SIZE * 200:
+        if self.memory.real_size > BATCH_SIZE * 6 and not self.test_tag:
             minibatch = random.sample(self.memory.queue, BATCH_SIZE)
             state = np.array([data[0] for data in minibatch])
             action_batch = np.array([data[1] for data in minibatch])
@@ -72,44 +87,54 @@ class RL_Bot(sc2.BotAI):
 
             q_ = np.max(self.session.run(self.net.q_, {self.net.state_next: state_next}), axis=1)[:, np.newaxis]
             y_input = np.squeeze(reward_batch[:, np.newaxis] + GAMMA * q_ * (np.array(abs(terminateds - 1))[:, np.newaxis]))
-            self.session.run([self.net.trian_op, self.net.loss], {self.net.y_input: y_input,
-                                                                  self.net.state: state,
-                                                                  self.net.action_input: action_batch})
-            if iteration % 1000 == 0:
+            _, merged_summary = self.session.run([self.net.trian_op, self.net.merged_summary], {self.net.y_input: y_input,
+                                                                                                self.net.state: state,
+                                                                                                self.net.action_input: action_batch})
+            self.writer.add_summary(merged_summary, self.step)
+            self.step += 1
+            if iteration % HARD_REPLACE == 0:
                 self.session.run(self.net.hard_replace)
 
 
 def main():
     rlBot = RL_Bot()
-    rlBot.research_combatshield = 0
-    rlBot.eConcussiveshells =0
-    n_epsiodes = EPSIODES
-    while n_epsiodes != 0:
+    if not rlBot.test_tag:
+        n_epsiodes = EPSIODES
+        win_rate = []
+        while n_epsiodes >= 0:
+            # 保存模型
+            if n_epsiodes % SAVE_CYCLE == 0:
+                rlBot.saver.save(rlBot.session, "model/economicFirst.ckpt")
+
+            r = sc2.run_game(
+                sc2.maps.get("Flat128"),
+                [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.MediumHard)],
+                realtime=False,
+            )
+            reward = get_reward(r)
+
+            rlBot.memory.inQueue([rlBot.current_state, np.eye(rlBot.action_dim)[rlBot.action], reward, rlBot.next_state, 1])
+            rlBot.current_state = None
+            rlBot.action = None
+            rlBot.next_state = None
+            rlBot.research_combatshield = 0
+            rlBot.eConcussiveshells = 0
+            n_epsiodes -= 1
+            if reward == 1:
+                rlBot.win += 1
+            win_rate.append(rlBot.win / (EPSIODES - n_epsiodes))
+            np.save('result/win_rate', win_rate)
+            print("epsiodes: %d  win_rate: %f" % (EPSIODES - n_epsiodes, rlBot.win / (EPSIODES - n_epsiodes)))
+
+
+
+    else:
+        rlBot.saver.restore(rlBot.session, "model/economicFirst.ckpt")
         r = sc2.run_game(
-
             sc2.maps.get("Flat128"),
-            [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.MediumHard)],
-            realtime=False,
-            # disable_fog=True
+            [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, rlBot, name="RL_bot")],
+            realtime=True,
         )
-    # r = sc2.run_game(
-    #     sc2.maps.get("Flat128"),
-    #     [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, rlBot, name="RL_bot")],
-    #     realtime=True,
-    # disable_fog = True
-    # )
-    # sc2.Result
-        reward = get_reward(r)
-
-        rlBot.memory.inQueue([rlBot.current_state, np.eye(rlBot.action_dim)[rlBot.action], reward, rlBot.next_state, 1])
-        rlBot.current_state = None
-        rlBot.action = None
-        # rlBot.current_state
-        rlBot.next_state = None
-        rlBot.research_combatshield = 0
-        rlBot.eConcussiveshells = 0
-
-        n_epsiodes -= 1
 
 
 if __name__ == "__main__":

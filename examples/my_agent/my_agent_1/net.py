@@ -27,6 +27,7 @@ class net(object):
         self.trian_op, self.loss = self.create_training_method(self.action_input, self.q, self.y_input)
 
         self.hard_replace = [tf.assign(t, e) for t, e in zip(self.qt_params, self.qe_params)]
+        self.merged_summary = tf.summary.merge_all()
 
     def _setup_placeholders_graph(self):
         # s
@@ -53,4 +54,5 @@ class net(object):
         Q_action = tf.reduce_sum(tf.multiply(q_value, action_input), axis=1)
         cost = tf.reduce_mean(tf.square(y_input - Q_action))
         train_op = tf.train.AdamOptimizer(self.learning_rate).minimize(cost)
+        tf.summary.scalar("loss", cost)
         return train_op, cost
