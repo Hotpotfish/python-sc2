@@ -24,7 +24,7 @@ HARD_REPLACE = 2000
 
 
 class RL_Bot(sc2.BotAI):
-    def __init__(self):
+    def __init__(self, map_name):
         super().__init__()
         # self.
         self.memory = SqQueue(2e6)
@@ -46,7 +46,7 @@ class RL_Bot(sc2.BotAI):
         self.net = net(0, 1, 1e-3, self.action_dim, 64, 'net')
 
         self.session = tf.Session()
-        self.writer = tf.summary.FileWriter('logs/', self.session.graph)
+        self.writer = tf.summary.FileWriter("economicFirst/logs/" + map_name, self.session.graph)
         self.step = 0
         self.saver = tf.train.Saver()
         self.session.run(tf.initialize_all_variables())
@@ -97,17 +97,23 @@ class RL_Bot(sc2.BotAI):
 
 
 def main():
-    rlBot = RL_Bot()
+    map_name = "Flat128"
+    rlBot = RL_Bot(map_name)
+
+    # rlBot.map_name = map_name
     if not rlBot.test_tag:
         n_epsiodes = EPSIODES
         win_rate = []
         while n_epsiodes >= 0:
             # 保存模型
             if n_epsiodes % SAVE_CYCLE == 0:
-                rlBot.saver.save(rlBot.session, "model/economicFirst.ckpt")
+                isExists = os.path.exists("economicFirst/model/" + map_name)
+                if not isExists:
+                    os.makedirs("economicFirst/model/" + map_name)
+                rlBot.saver.save(rlBot.session, "economicFirst/model/" + map_name + "/save.ckpt")
 
             r = sc2.run_game(
-                sc2.maps.get("Flat128"),
+                sc2.maps.get(map_name),
                 [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.MediumHard)],
                 realtime=False,
             )
@@ -123,14 +129,14 @@ def main():
             if reward == 1:
                 rlBot.win += 1
             win_rate.append(rlBot.win / (EPSIODES - n_epsiodes))
-            np.save('result/win_rate', win_rate)
+            isExists = os.path.exists("economicFirst/result/" + map_name)
+            if not isExists:
+                os.makedirs("economicFirst/result/" + map_name)
+            np.save("economicFirst/result/" + map_name + '/win_rate', win_rate)
             print("epsiodes: %d  win_rate: %f" % (EPSIODES - n_epsiodes, rlBot.win / (EPSIODES - n_epsiodes)))
-
-
-
     else:
-        rlBot.saver.restore(rlBot.session, "model/economicFirst.ckpt")
-        r = sc2.run_game(
+        rlBot.saver.restore(rlBot.session, "economicFirst/model/" + map_name + "/save.ckpt")
+        sc2.run_game(
             sc2.maps.get("Flat128"),
             [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, rlBot, name="RL_bot")],
             realtime=True,
