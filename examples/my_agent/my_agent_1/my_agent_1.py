@@ -99,6 +99,8 @@ class RL_Bot(sc2.BotAI):
 def main():
     map_name = "Flat128"
     rlBot = RL_Bot(map_name)
+    # rlBot.test_tag = True
+
 
     # rlBot.map_name = map_name
     if not rlBot.test_tag:
@@ -137,8 +139,11 @@ def main():
     else:
         rlBot.saver.restore(rlBot.session, "economicFirst/model/" + map_name + "/save.ckpt")
         sc2.run_game(
-            sc2.maps.get("Flat128"),
-            [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, rlBot, name="RL_bot")],
+            sc2.maps.get("LostAndFoundLE"),
+            [Human(Race.Terran, fullscreen=True),
+             Computer(Race.Protoss, Difficulty.Harder),
+             #Bot(Race.Terran, rlBot, name="RL_bot")
+             ],
             realtime=True,
         )
 
