@@ -116,7 +116,7 @@ def main():
 
             r = sc2.run_game(
                 sc2.maps.get(map_name),
-                [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.Hard)],
+                [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.VeryHard)],
                 realtime=False,
             )
             reward = get_reward(r)

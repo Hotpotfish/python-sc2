@@ -16,10 +16,10 @@ import sc2
 from sc2 import Race, Difficulty
 from sc2.player import Bot, Computer, Human
 
-EPSIODES = 2000
+EPSIODES = 1000
 BATCH_SIZE = 512
 GAMMA = 0.99
-SAVE_CYCLE = 10
+SAVE_CYCLE = 5
 HARD_REPLACE = 2000
 
 
@@ -43,12 +43,13 @@ class RL_Bot(sc2.BotAI):
         self.fin_epsilon = 0.01
         self.current_epsilon = self.init_epsilon
 
-        self.net = net(0, 1, 1e-3, self.action_dim, 45, 'net')
+        self.net = net(0, 1, 1e-2, self.action_dim, 45, 'net')
+        self.saver = tf.train.Saver(max_to_keep=1)
 
         self.session = tf.Session()
         self.writer = tf.summary.FileWriter("rush/logs/" + map_name, self.session.graph)
         self.step = 0
-        self.saver = tf.train.Saver()
+
         self.session.run(tf.initialize_all_variables())
 
         self.research_combatshield = 0
@@ -58,47 +59,50 @@ class RL_Bot(sc2.BotAI):
         # print(iteration)
         # 62维
         self.current_state = get_state(self)
+        # print(self.current_state)
         q = np.array(self.session.run(self.net.q, {self.net.state: self.current_state[np.newaxis]})[0])
         mask = await getMask(self)
 
         q = q * mask
-        if not self.test_tag:
 
+        if not self.test_tag:
             if random.random() <= self.current_epsilon:
                 self.action = np.random.choice(np.nonzero(np.array(mask))[0])
             else:
                 self.action = np.argmax(q)
+            self.current_epsilon -= (self.init_epsilon - self.fin_epsilon) / (EPSIODES * 2000)
+            # print(self.action)
+            if self.next_state is not None:
+                self.memory.inQueue([self.current_state, np.eye(self.action_dim)[self.action], 0, self.next_state, 0])
+            await economic_action[self.action](self)
+            self.next_state = self.current_state
+
+            if self.memory.real_size > BATCH_SIZE * 6 and not self.test_tag:
+                minibatch = random.sample(self.memory.queue, BATCH_SIZE)
+                state = np.array([data[0] for data in minibatch])
+                action_batch = np.array([data[1] for data in minibatch])
+                reward_batch = np.array([data[2] for data in minibatch])
+                state_next = np.array([data[3] for data in minibatch])
+                terminateds = np.array([data[4] for data in minibatch])
+
+                q_ = np.max(self.session.run(self.net.q_, {self.net.state_next: state_next}), axis=1)[:, np.newaxis]
+                y_input = np.squeeze(reward_batch[:, np.newaxis] + GAMMA * q_ * (np.array(abs(terminateds - 1))[:, np.newaxis]))
+                _, merged_summary = self.session.run([self.net.trian_op, self.net.merged_summary], {self.net.y_input: y_input,
+                                                                                                    self.net.state: state,
+                                                                                                    self.net.action_input: action_batch})
+                self.writer.add_summary(merged_summary, self.step)
+                self.step += 1
+                if iteration % HARD_REPLACE == 0:
+                    self.session.run(self.net.hard_replace)
         else:
             self.action = np.argmax(q)
-        self.current_epsilon -= (self.init_epsilon - self.fin_epsilon) / (EPSIODES * 2000)
-        # print(self.action)
-        if self.next_state is not None:
-            self.memory.inQueue([self.current_state, np.eye(self.action_dim)[self.action], 0, self.next_state, 0])
-        await economic_action[self.action](self)
-        self.next_state = self.current_state
-
-        if self.memory.real_size > BATCH_SIZE * 6 and not self.test_tag:
-            minibatch = random.sample(self.memory.queue, BATCH_SIZE)
-            state = np.array([data[0] for data in minibatch])
-            action_batch = np.array([data[1] for data in minibatch])
-            reward_batch = np.array([data[2] for data in minibatch])
-            state_next = np.array([data[3] for data in minibatch])
-            terminateds = np.array([data[4] for data in minibatch])
-
-            q_ = np.max(self.session.run(self.net.q_, {self.net.state_next: state_next}), axis=1)[:, np.newaxis]
-            y_input = np.squeeze(reward_batch[:, np.newaxis] + GAMMA * q_ * (np.array(abs(terminateds - 1))[:, np.newaxis]))
-            _, merged_summary = self.session.run([self.net.trian_op, self.net.merged_summary], {self.net.y_input: y_input,
-                                                                                                self.net.state: state,
-                                                                                                self.net.action_input: action_batch})
-            self.writer.add_summary(merged_summary, self.step)
-            self.step += 1
-            if iteration % HARD_REPLACE == 0:
-                self.session.run(self.net.hard_replace)
+            await economic_action[self.action](self)
 
 
 def main():
     map_name = "Flat128"
     rlBot = RL_Bot(map_name)
+    rlBot.test_tag = True
 
     # rlBot.map_name = map_name
     if not rlBot.test_tag:
@@ -110,11 +114,11 @@ def main():
                 isExists = os.path.exists("rush/model/" + map_name)
                 if not isExists:
                     os.makedirs("rush/model/" + map_name)
-                rlBot.saver.save(rlBot.session, "rush/model/" + map_name + "/save.ckpt")
+                rlBot.saver.save(rlBot.session, "rush/model/" + map_name + "/save.ckpt", global_step=EPSIODES - n_epsiodes)
 
             r = sc2.run_game(
                 sc2.maps.get(map_name),
-                [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.Hard)],
+                [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.CheatMoney)],
                 realtime=False,
             )
             reward = get_reward(r)
@@ -135,12 +139,19 @@ def main():
             np.save("rush/result/" + map_name + '/win_rate', win_rate)
             print("epsiodes: %d  win_rate: %f" % (EPSIODES - n_epsiodes, rlBot.win / (EPSIODES - n_epsiodes)))
     else:
-        rlBot.saver.restore(rlBot.session, "rush/model/" + map_name + "/save.ckpt")
-        sc2.run_game(
-            sc2.maps.get("Flat128"),
-            [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, rlBot, name="RL_bot")],
-            realtime=True,
+        model_file = tf.train.latest_checkpoint("rush/model/" + map_name + "/")
+        rlBot.saver.restore(rlBot.session, model_file)
+        # sc2.run_game(
+        #     sc2.maps.get("Flat128"),
+        #     [Human(Race.Terran, fullscreen=True), Bot(Race.Terran, rlBot, name="RL_bot")],
+        #     realtime=True,
+        # )
+        r = sc2.run_game(
+            sc2.maps.get(map_name),
+            [Bot(Race.Terran, rlBot, name="RL_bot"), Computer(Race.Terran, Difficulty.Hard)],
+            realtime=False,
         )
+
 
 
 if __name__ == "__main__":
